@@ -6,6 +6,7 @@ import Upload from "@/components/Upload";
 import * as React from "react";
 import { Delete, Google, Save } from "@mui/icons-material";
 import { google } from "googleapis";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -178,6 +179,7 @@ export default function Home() {
       <div
         className={`${styles.page} ${geistSans.variable} ${geistMono.variable}`}
       >
+        <SpeedInsights />
         <main className={styles.main}>
           {/* <Typography variant="h3">Judol Slayer Main Content</Typography> */}
           {!isCredentialAvailable ? (
@@ -204,16 +206,18 @@ export default function Home() {
               </Button>
             </Box>
           )}
-          <Button
-            variant="contained"
-            color="error"
-            startIcon={<Google />}
-            onClick={() => {
-              // handleLoginOauthGoogle();
-            }}
-          >
-            Login With Google
-          </Button>
+          {isCredentialAvailable ? (
+            <Button
+              variant="contained"
+              color="error"
+              startIcon={<Google />}
+              onClick={() => {
+                // handleLoginOauthGoogle();
+              }}
+            >
+              Login With Google
+            </Button>
+          ) : null}
           <Box display={"flex"} flexDirection="column" gap={1.5}>
             <label htmlFor="channel-id">
               {
