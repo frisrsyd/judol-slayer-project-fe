@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { setCredential } from "../../utils/credentials";
+import { setCredential } from "../../../utils/credentials";
 
 export default async function handler(
   req: NextApiRequest,
@@ -19,7 +19,7 @@ export default async function handler(
   }
 
   try {
-    await setCredential(credential, res);
+    setCredential(credential, res);
     return res.status(200).json({ message: "Credential set successfully" });
   } catch (error) {
     console.error("Error setting credential:", error);

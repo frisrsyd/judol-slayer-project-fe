@@ -4,7 +4,8 @@ import styles from "@/styles/Home.module.css";
 import { Box, Button, TextField, Typography } from "@mui/material";
 import Upload from "@/components/Upload";
 import * as React from "react";
-import { Delete } from "@mui/icons-material";
+import { Delete, Google, Save } from "@mui/icons-material";
+import { google } from "googleapis";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,7 +47,7 @@ export default function Home() {
 
   const handleDeleteCredential = async () => {
     try {
-      const response = await fetch("/api/delete-credential", {
+      const response = await fetch("/api/credential/delete", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -54,7 +55,7 @@ export default function Home() {
       });
       const data = await response.json();
       console.log("Response from server:", data);
-      setIsCredentialAvailable(false);
+      checkCredentialIsValid();
     } catch (error) {
       console.error("Error deleting credential:", error);
     }
@@ -63,7 +64,7 @@ export default function Home() {
   const handleSaveChannelId = async (channelId: string | null) => {
     if (channelId) {
       try {
-        const response = await fetch("/api/set-channel-id", {
+        const response = await fetch("/api/channel-id/create", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -80,7 +81,7 @@ export default function Home() {
 
   const setCredential = async () => {
     try {
-      const response = await fetch("/api/set-credential", {
+      const response = await fetch("/api/credential/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -103,7 +104,7 @@ export default function Home() {
 
   const checkCredentialIsValid = async () => {
     try {
-      const response = await fetch("/api/is-credential-valid", {
+      const response = await fetch("/api/credential/verify", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -124,6 +125,44 @@ export default function Home() {
   React.useEffect(() => {
     checkCredentialIsValid();
   }, []);
+
+  const getChannelId = async () => {
+    try {
+      const response = await fetch("/api/channel-id/read", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      console.log("Response from server:", data);
+      setChannelId(data.channelId);
+    } catch (error) {
+      console.error("Error getting channel ID:", error);
+    }
+  };
+
+  React.useEffect(() => {
+    getChannelId();
+  }, []);
+
+  const handleDeleteChannelId = async (channelId: string | null) => {
+    if (channelId) {
+      try {
+        const response = await fetch("/api/channel-id/delete", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
+        console.log("Response from server:", data);
+        getChannelId();
+      } catch (error) {
+        console.error("Error deleting channel ID:", error);
+      }
+    }
+  };
 
   return (
     <>
@@ -165,6 +204,16 @@ export default function Home() {
               </Button>
             </Box>
           )}
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={<Google />}
+            onClick={() => {
+              // handleLoginOauthGoogle();
+            }}
+          >
+            Login With Google
+          </Button>
           <Box display={"flex"} flexDirection="column" gap={1.5}>
             <label htmlFor="channel-id">
               {
@@ -195,15 +244,34 @@ export default function Home() {
                 borderRadius: "4px",
               }}
             />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => {
-                handleSaveChannelId(channelId);
-              }}
+            <Box
+              display={"flex"}
+              flexDirection="row"
+              gap={1.5}
+              justifyContent="space-between"
+              alignItems="center"
             >
-              Submit Channel ID
-            </Button>
+              <Button
+                variant="contained"
+                color="error"
+                startIcon={<Delete />}
+                onClick={() => {
+                  handleDeleteChannelId(channelId);
+                }}
+              >
+                Delete Channel ID
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Save />}
+                onClick={() => {
+                  handleSaveChannelId(channelId);
+                }}
+              >
+                Submit Channel ID
+              </Button>
+            </Box>
           </Box>
           {!!credentialJson && (
             <Typography variant="subtitle2">

@@ -1,6 +1,7 @@
 import { signJwt, verifyJwt } from "./jwt";
 
 function setChannelId(channelIdJson: Record<string, any>, res: any) {
+  console.log("channelIdJson: ", channelIdJson);
   const channelIdJwt = signJwt(channelIdJson, 60 * 60 * 24 * 365); // 1 year
 
   res.setHeader(
@@ -17,6 +18,7 @@ function getChannelId(req: any) {
     throw new Error("ChannelId not found in cookies");
   }
   const verifiedChannelId = verifyJwt(cookie);
+  console.log("verifiedChannelId: ", verifiedChannelId);
   return verifiedChannelId;
 }
 

@@ -17,6 +17,7 @@ function getCredential(req: any) {
     throw new Error("Credential not found in cookies");
   }
   const verifiedCredential = verifyJwt(cookie);
+  console.log("verifiedCredential: ", verifiedCredential);
   return verifiedCredential;
 }
 
