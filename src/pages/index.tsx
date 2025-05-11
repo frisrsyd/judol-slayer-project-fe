@@ -4,9 +4,10 @@ import styles from "@/styles/Home.module.css";
 import { Box, Button, TextField, Typography } from "@mui/material";
 import Upload from "@/components/Upload";
 import * as React from "react";
-import { Delete, Google, Save } from "@mui/icons-material";
+import { Check, Delete, Google, Logout, Save } from "@mui/icons-material";
 import { google } from "googleapis";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { get } from "http";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,9 +27,14 @@ export default function Home() {
   const [channelId, setChannelId] = React.useState<string | null>(null);
   const [isCredentialAvailable, setIsCredentialAvailable] =
     React.useState<boolean>(false);
+  const [isTokenAvailable, setIsTokenAvailable] =
+    React.useState<boolean>(false);
+  const [isChannelIdAvailable, setIsChannelIdAvailable] =
+    React.useState<boolean>(false);
+  const [isLogout, setIsLogout] = React.useState<boolean>(false);
 
   const onFileChange = (file: FileList | null) => {
-    if (file) {
+    if (!!file?.length) {
       const selectedFile = file[0];
       console.log("File selected:", selectedFile);
 
@@ -43,6 +49,7 @@ export default function Home() {
         }
       };
       reader.readAsText(selectedFile); // Uncommented to read the file content
+      console.log("this line after read as text of json");
     }
   };
 
@@ -73,6 +80,7 @@ export default function Home() {
           body: JSON.stringify({ channelId }),
         });
         const data = await response.json();
+        getChannelId();
         console.log("Response from server:", data);
       } catch (error) {
         console.error("Error saving channel ID:", error);
@@ -98,10 +106,11 @@ export default function Home() {
   };
 
   React.useEffect(() => {
+    console.log("Credential JSON Changed:", credentialJson);
     if (credentialJson) {
       setCredential();
     }
-  }, [JSON.stringify(credentialJson)]);
+  }, [credentialJson]);
 
   const checkCredentialIsValid = async () => {
     try {
@@ -127,6 +136,30 @@ export default function Home() {
     checkCredentialIsValid();
   }, []);
 
+  const tokenIsValid = async () => {
+    try {
+      const response = await fetch("/api/token/verify", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      console.log("Response from server:", data);
+      if (data.isValid) {
+        setIsTokenAvailable(true);
+      } else {
+        setIsTokenAvailable(false);
+      }
+    } catch (error) {
+      console.error("Error getting token:", error);
+    }
+  };
+
+  React.useEffect(() => {
+    tokenIsValid();
+  }, []);
+
   const getChannelId = async () => {
     try {
       const response = await fetch("/api/channel-id/read", {
@@ -137,6 +170,7 @@ export default function Home() {
       });
       const data = await response.json();
       console.log("Response from server:", data);
+      setIsChannelIdAvailable(!!data.channelId);
       setChannelId(data.channelId);
     } catch (error) {
       console.error("Error getting channel ID:", error);
@@ -165,6 +199,141 @@ export default function Home() {
     }
   };
 
+  const handleLoginOauthGoogle = async () => {
+    try {
+      // Step 1: Get the Google OAuth URL
+      const response = await fetch("/api/google-oauth", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      // console.log("Response from BE:", data);
+
+      if (data?.url) {
+        // Step 2: Redirect the user to the OAuth URL
+        console.log("OAuth URL:", data.url);
+        const popup = window.open(data.url, "_blank", "width=600,height=600");
+
+        // Step 3: Listen for the authorization code
+        const interval = setInterval(async () => {
+          try {
+            if (popup?.closed) {
+              clearInterval(interval);
+              console.error(
+                "Popup closed before completing the login process."
+              );
+              return;
+            }
+
+            const urlParams = new URLSearchParams(popup?.location.search);
+            const code = urlParams.get("code");
+
+            if (code) {
+              clearInterval(interval);
+              popup?.close();
+
+              // Step 4: Send the authorization code to the API
+              const tokenResponse = await fetch("/api/google-oauth", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ code }),
+              });
+
+              const tokenData = await tokenResponse.json();
+              console.log("Token response from server:", tokenData);
+              checkCredentialIsValid();
+              tokenIsValid();
+            }
+          } catch (error) {
+            // Ignore cross-origin errors until the popup redirects to the same origin
+          }
+        }, 500);
+      } else {
+        console.log(data.message);
+        checkCredentialIsValid();
+        tokenIsValid();
+      }
+    } catch (error) {
+      console.error("Error logging in with Google:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      // const response = await fetch("/api/logout", {
+      //   method: "DELETE",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      // });
+      // const data = await response.json();
+      // console.log("Response from server:", data);
+      // checkCredentialIsValid();
+      // tokenIsValid();
+      Promise.all([
+        fetch("/api/token/delete", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }),
+        fetch("/api/credential/delete", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }),
+        fetch("/api/channel-id/delete", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }),
+      ])
+        .then((responses) => {
+          responses.forEach((response) => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+          });
+          console.log("Logout successful");
+          setIsLogout(true);
+        })
+        .catch((error) => {
+          console.error("Error during logout:", error);
+        });
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
+  React.useEffect(() => {
+    console.log("isLogout:", isLogout);
+    if (isLogout) {
+      checkCredentialIsValid();
+      tokenIsValid();
+    }
+  }, [isLogout]);
+
+  const handleDeleteJudolComments = async () => {
+    try {
+      const response = await fetch("/api/do-delete-judol-comments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      console.log("Response from server:", data);
+    } catch (error) {
+      console.error("Error deleting judol comments:", error);
+    }
+  };
+
   return (
     <>
       <Head>
@@ -184,7 +353,7 @@ export default function Home() {
           {/* <Typography variant="h3">Judol Slayer Main Content</Typography> */}
           {!isCredentialAvailable ? (
             <Upload onFileChange={onFileChange} />
-          ) : (
+          ) : !isTokenAvailable ? (
             <Box display={"flex"} flexDirection="column" gap={1.5}>
               <Typography variant="subtitle1">
                 Credential is already set, wanna change credential?
@@ -205,17 +374,17 @@ export default function Home() {
                 Change Credential
               </Button>
             </Box>
-          )}
+          ) : null}
           {isCredentialAvailable ? (
             <Button
               variant="contained"
               color="error"
-              startIcon={<Google />}
+              startIcon={!isTokenAvailable ? <Google /> : <Logout />}
               onClick={() => {
-                // handleLoginOauthGoogle();
+                !isTokenAvailable ? handleLoginOauthGoogle() : handleLogout();
               }}
             >
-              Login With Google
+              {!isTokenAvailable ? "Login With Google" : "Log Out"}
             </Button>
           ) : null}
           <Box display={"flex"} flexDirection="column" gap={1.5}>
@@ -255,20 +424,23 @@ export default function Home() {
               justifyContent="space-between"
               alignItems="center"
             >
-              <Button
-                variant="contained"
-                color="error"
-                startIcon={<Delete />}
-                onClick={() => {
-                  handleDeleteChannelId(channelId);
-                }}
-              >
-                Delete Channel ID
-              </Button>
+              {isChannelIdAvailable ? (
+                <Button
+                  variant="contained"
+                  color="error"
+                  startIcon={<Delete />}
+                  onClick={() => {
+                    handleDeleteChannelId(channelId);
+                  }}
+                >
+                  Delete Channel ID
+                </Button>
+              ) : null}
               <Button
                 variant="contained"
                 color="primary"
                 startIcon={<Save />}
+                disabled={!channelId}
                 onClick={() => {
                   handleSaveChannelId(channelId);
                 }}
@@ -276,12 +448,23 @@ export default function Home() {
                 Submit Channel ID
               </Button>
             </Box>
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<Check />}
+              disabled={!channelId}
+              onClick={() => {
+                handleDeleteJudolComments();
+              }}
+            >
+              LETS SLAYER JUDOL COMMENTS
+            </Button>
           </Box>
-          {!!credentialJson && (
+          {/* {!!credentialJson && (
             <Typography variant="subtitle2">
               {JSON.stringify(credentialJson, null, 2)}
             </Typography>
-          )}
+          )} */}
         </main>
         {/* <footer className={styles.footer}>
           <a

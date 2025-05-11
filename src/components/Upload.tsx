@@ -22,10 +22,7 @@ export default function Upload({ ...props }) {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files ? event.target.files : null;
-    if (selectedFile) {
-      setFile(selectedFile);
-      console.log("Selected file:", selectedFile);
-    }
+    setFile(selectedFile);
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -34,6 +31,8 @@ export default function Upload({ ...props }) {
     if (droppedFiles.length > 0) {
       setFile(droppedFiles);
       console.log("Dropped file:", droppedFiles);
+    } else {
+      console.log("No files dropped.");
     }
   };
 
@@ -64,7 +63,7 @@ export default function Upload({ ...props }) {
               color="primary"
               href="https://console.cloud.google.com/"
               target="_blank"
-              sx={{textDecoration: "underline"}} 
+              sx={{ textDecoration: "underline" }}
             >
               YouTube API v3 OAuth2
             </Typography>
