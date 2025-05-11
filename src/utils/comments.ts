@@ -43,7 +43,10 @@ function getJudolComment(text: string, req: any) {
     return true;
   }
   const fetchBlockedWords = getBlockedWords(req);
-  const blockedWords = fetchBlockedWords.blokedWords as string[];
+  const blockedWords =
+    typeof fetchBlockedWords === "object" && fetchBlockedWords !== null
+      ? (fetchBlockedWords as { blockedWords: string[] }).blockedWords
+      : [];
 
   const lowerText = text.toLowerCase();
 
@@ -118,64 +121,64 @@ async function youtubeContentList(auth: any, youtubeChannelID: string) {
 }
 
 async function doDeleteJudolComment(req: any, res: any) {
-    const logs: string[] = [];
-    try {
-        const auth = await handleGoogleAuth(req, res);
-        const fetchChannelId = getChannelId(req);
-        const channelId = fetchChannelId.channelId;
-        const contentList = await youtubeContentList(auth, channelId);
+  const logs: string[] = [];
+  try {
+    const auth = await handleGoogleAuth(req, res);
+    const fetchChannelId = getChannelId(req);
+    const channelId = fetchChannelId.channelId;
+    const contentList = await youtubeContentList(auth, channelId);
 
-        for (const video of contentList) {
-            const title = video.snippet.title;
-            const videoId = video.snippet.resourceId.videoId;
-            const logMessage = `\n📹 Checking video: ${title} (ID: ${videoId})`;
-            console.log(logMessage);
-            logs.push(logMessage);
+    for (const video of contentList) {
+      const title = video.snippet.title;
+      const videoId = video.snippet.resourceId.videoId;
+      const logMessage = `\n📹 Checking video: ${title} (ID: ${videoId})`;
+      console.log(logMessage);
+      logs.push(logMessage);
 
-            const spamComments = await fetchComments(req, auth, videoId);
+      const spamComments = await fetchComments(req, auth, videoId);
 
-            if (spamComments.length > 0) {
-                const spamLog = `🚫 Found ${spamComments.length} spam comments. Deleting...`;
-                console.log(spamLog);
-                logs.push(spamLog);
+      if (spamComments.length > 0) {
+        const spamLog = `🚫 Found ${spamComments.length} spam comments. Deleting...`;
+        console.log(spamLog);
+        logs.push(spamLog);
 
-                await deleteComments(auth, spamComments);
+        await deleteComments(auth, spamComments);
 
-                const deleteLog = "✅ Spam comments deleted.";
-                console.log(deleteLog);
-                logs.push(deleteLog);
-            } else {
-                const noSpamLog = "✅ No spam comments found.";
-                console.log(noSpamLog);
-                logs.push(noSpamLog);
-            }
-        }
-
-        // Write logs to file
-        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-        const logFileName = `${channelId}-${timestamp}.log`;
-        const logFilePath = path.join(__dirname, "logs", logFileName);
-
-        // Ensure the logs directory exists
-        fs.mkdirSync(path.dirname(logFilePath), { recursive: true });
-
-        fs.writeFileSync(logFilePath, logs.join("\n"), "utf-8");
-        console.log(`Logs written to ${logFilePath}`);
-    } catch (error) {
-        const errorLog = `Error running script: ${(error as Error).message}`;
-        console.error(errorLog);
-        logs.push(errorLog);
-
-        // Write logs to file even if there's an error
-        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-        const logFileName = `error-${timestamp}.log`;
-        const logFilePath = path.join(__dirname, "logs", logFileName);
-
-        fs.mkdirSync(path.dirname(logFilePath), { recursive: true });
-
-        fs.writeFileSync(logFilePath, logs.join("\n"), "utf-8");
-        console.log(`Error logs written to ${logFilePath}`);
+        const deleteLog = "✅ Spam comments deleted.";
+        console.log(deleteLog);
+        logs.push(deleteLog);
+      } else {
+        const noSpamLog = "✅ No spam comments found.";
+        console.log(noSpamLog);
+        logs.push(noSpamLog);
+      }
     }
+
+    // Write logs to file
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const logFileName = `${channelId}-${timestamp}.log`;
+    const logFilePath = path.join("logs", logFileName);
+
+    // Ensure the logs directory exists
+    fs.mkdirSync(path.dirname(logFilePath), { recursive: true });
+
+    fs.writeFileSync(logFilePath, logs.join("\n"), "utf-8");
+    console.log(`Logs written to ${logFilePath}`);
+  } catch (error) {
+    const errorLog = `Error running script: ${(error as Error).message}`;
+    console.error(errorLog);
+    logs.push(errorLog);
+
+    // Write logs to file even if there's an error
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const logFileName = `error-${timestamp}.log`;
+    const logFilePath = path.join("logs", logFileName);
+
+    fs.mkdirSync(path.dirname(logFilePath), { recursive: true });
+
+    fs.writeFileSync(logFilePath, logs.join("\n"), "utf-8");
+    console.log(`Error logs written to ${logFilePath}`);
+  }
 }
 
 export { doDeleteJudolComment };
