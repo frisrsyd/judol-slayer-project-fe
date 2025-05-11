@@ -93,25 +93,28 @@ async function youtubeContentList(auth: any, youtubeChannelID: string) {
   try {
     const response = await youtube.channels.list({
       part: ["contentDetails"],
-      id: youtubeChannelID, // ← use forUsername if you're passing a name
+      id: [youtubeChannelID], // ← use forUsername if you're passing a name
     });
 
-    const channel = response.data.items[0];
-    const uploadsPlaylistId = channel.contentDetails.relatedPlaylists.uploads;
+    const channel = response.data?.items?.[0] ?? null;
+    const uploadsPlaylistId =
+      channel?.contentDetails?.relatedPlaylists?.uploads;
 
     const allVideos = [];
     let nextPageToken = "";
 
     do {
       const playlistResponse = await youtube.playlistItems.list({
-        part: "snippet",
+        part: ["snippet"],
         playlistId: uploadsPlaylistId,
         maxResults: 50,
         pageToken: nextPageToken,
       });
 
-      allVideos.push(...playlistResponse.data.items);
-      nextPageToken = playlistResponse.data.nextPageToken;
+      if (playlistResponse.data.items) {
+        allVideos.push(...playlistResponse.data.items);
+      }
+      nextPageToken = playlistResponse.data.nextPageToken || "";
     } while (nextPageToken);
     return allVideos;
   } catch (error) {
@@ -125,12 +128,17 @@ async function doDeleteJudolComment(req: any, res: any) {
   try {
     const auth = await handleGoogleAuth(req, res);
     const fetchChannelId = getChannelId(req);
-    const channelId = fetchChannelId.channelId;
-    const contentList = await youtubeContentList(auth, channelId);
+    const channelId =
+      typeof fetchChannelId === "object" &&
+      !!fetchChannelId &&
+      "channelId" in fetchChannelId
+        ? (fetchChannelId as { channelId: string }).channelId
+        : fetchChannelId;
+    const contentList = await youtubeContentList(auth, channelId as string);
 
     for (const video of contentList) {
-      const title = video.snippet.title;
-      const videoId = video.snippet.resourceId.videoId;
+      const title = video?.snippet?.title;
+      const videoId = video.snippet?.resourceId?.videoId;
       const logMessage = `\n📹 Checking video: ${title} (ID: ${videoId})`;
       console.log(logMessage);
       logs.push(logMessage);
