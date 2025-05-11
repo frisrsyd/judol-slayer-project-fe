@@ -368,6 +368,7 @@ export default function Home() {
           content="Judol Slayer UI Project improvement"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="google-site-verification" content="eDhx04SCQ6SH_tjtQfb41rHqo3RtbBsY2YMfyyRvuSU" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div
