@@ -20,7 +20,8 @@ async function handleGoogleAuth(req: any, res: any) {
   try {
     const token = getToken(req);
     console.log("Existing token found:", token);
-    oAuth2Client.setCredentials(token);
+    const parsedToken = typeof token === "string" ? JSON.parse(token) : token;
+    oAuth2Client.setCredentials(parsedToken);
     return oAuth2Client;
   } catch (error) {
     console.log("No token found, initiating login flow...");
@@ -54,8 +55,8 @@ async function handleGoogleAuth(req: any, res: any) {
       });
     });
 
-    oAuth2Client.setCredentials(token);
-    setToken(token, res);
+    oAuth2Client.setCredentials(token as any);
+    setToken(token as any, res);
     console.log("Token retrieved and set successfully:", token);
 
     return oAuth2Client;
