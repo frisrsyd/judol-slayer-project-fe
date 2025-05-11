@@ -455,7 +455,7 @@ export default function Home() {
                 Submit Channel ID
               </Button>
             </Box>
-            {isTokenAvailable && isCredentialAvailable && !!channelId ? (
+            {isTokenAvailable && isCredentialAvailable && isChannelIdAvailable ? (
               <Button
                 variant="contained"
                 color="success"
