@@ -21,7 +21,7 @@ function getCredential(req: any) {
   return verifiedCredential;
 }
 
-function isCredentialValid(req: any) {
+function isCredentialValidOld(req: any) {
   const cookie = req.cookies?.credential;
   console.log("cookie credential: ", cookie);
   if (!cookie) {
@@ -33,6 +33,25 @@ function isCredentialValid(req: any) {
   } catch (error) {
     return false;
   }
+}
+
+function isCredentialValid(req: any) {
+  // const cookie = req.cookies?.credential;
+  // console.log("cookie credential: ", cookie);
+  const credentialsWeb = process.env.NEXT_PUBLIC_GOOGLE_CREDENTIALS;
+  // if (!cookie) {
+  //   return false;
+  // }
+  if (!credentialsWeb) {
+    return false;
+  }
+  return true;
+  // try {
+  //   // verifyJwt(cookie);
+  //   return true;
+  // } catch (error) {
+  //   return false;
+  // }
 }
 
 function deleteCredential(res: any) {

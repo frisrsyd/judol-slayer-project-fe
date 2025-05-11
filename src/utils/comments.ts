@@ -9,7 +9,8 @@ async function fetchComments(
   req: any,
   auth: any,
   VIDEO_ID: any,
-  logs: string[]
+  logs: string[],
+  logCallback: (log: string) => void
 ) {
   const youtube = google.youtube({ version: "v3", auth });
 
@@ -30,18 +31,22 @@ async function fetchComments(
       const checkLog = `Checking comment: "${commentText}"`;
       console.log(checkLog);
       logs.push(checkLog);
+      logCallback(checkLog); // Send log in real-time
 
       if (getJudolComment(commentText as string, req)) {
         const spamLog = `🚨 Spam detected: "${commentText}"`;
         console.log(spamLog);
         logs.push(spamLog);
+        logCallback(spamLog); // Send log in real-time
         spamComments.push(commentId);
       }
     });
 
     return spamComments;
   } catch (error) {
-    console.error("Error fetching comments:", error);
+    const errorLog = `Error fetching comments: ${(error as Error).message}`;
+    console.error(errorLog);
+    logCallback(errorLog); // Send error log in real-time
     return [];
   }
 }
@@ -52,14 +57,15 @@ function getJudolComment(text: string, req: any) {
     return true;
   }
   const fetchBlockedWords = getBlockedWords(req);
-  const blockedWords =
-    typeof fetchBlockedWords === "object" && fetchBlockedWords !== null
+  const blockedWords: string[] =
+    typeof fetchBlockedWords === "object" && !!fetchBlockedWords
       ? (fetchBlockedWords as { blockedWords: string[] }).blockedWords
       : [];
 
+  console.log("blockedWords: ", blockedWords);
   const lowerText = text.toLowerCase();
 
-  if (blockedWords.length === 0) {
+  if (!Array.isArray(blockedWords) || blockedWords.length === 0) {
     return false;
   } else {
     return blockedWords.some((word: string) =>
@@ -69,7 +75,11 @@ function getJudolComment(text: string, req: any) {
 }
 
 // Delete comments
-async function deleteComments(auth: any, commentIds: any) {
+async function deleteComments(
+  auth: any,
+  commentIds: any,
+  logCallback: (log: string) => void
+) {
   const youtube = google.youtube({ version: "v3", auth });
 
   const totalCommentsToBeDeleted = commentIds.length;
@@ -83,26 +93,27 @@ async function deleteComments(auth: any, commentIds: any) {
         moderationStatus: "rejected",
       });
       totalDeletedComments += commentIdsChunk.length;
-      console.log(
-        `Progress: ${totalDeletedComments}/${totalCommentsToBeDeleted} (${commentIds.length} remaining)\n Deleted the following comment IDs:`,
-        commentIdsChunk
-      );
+      const progressLog = `Progress: ${totalDeletedComments}/${totalCommentsToBeDeleted} (${commentIds.length} remaining)\n Deleted the following comment IDs: ${commentIdsChunk}`;
+      console.log(progressLog);
+      logCallback(progressLog); // Send progress log in real-time
     } catch (error) {
-      console.error(
-        `Failed to delete these comment IDs: ${commentIdsChunk}:`,
+      const errorLog = `Failed to delete these comment IDs: ${commentIdsChunk}: ${
         (error as Error).message
-      );
+      }`;
+      console.error(errorLog);
+      logCallback(errorLog); // Send error log in real-time
     }
   } while (commentIds.length > 0);
 }
 
-async function youtubeContentList(auth: any, youtubeChannelID: string) {
+async function youtubeContentList(auth: any) {
   const youtube = google.youtube({ version: "v3", auth });
 
   try {
     const response = await youtube.channels.list({
       part: ["contentDetails"],
-      id: [youtubeChannelID], // ← use forUsername if you're passing a name
+      // id: [youtubeChannelID], // ← use forUsername if you're passing a name
+      mine: true,
     });
 
     const channel = response.data?.items?.[0] ?? null;
@@ -132,71 +143,59 @@ async function youtubeContentList(auth: any, youtubeChannelID: string) {
   }
 }
 
-async function doDeleteJudolComment(req: any, res: any) {
-  const logs: string[] = [];
+async function doDeleteJudolComment(
+  req: any,
+  res: any,
+  logCallback: (log: string) => void
+) {
   try {
     const auth = await handleGoogleAuth(req, res);
-    const fetchChannelId = getChannelId(req);
-    const channelId =
-      typeof fetchChannelId === "object" &&
-      !!fetchChannelId &&
-      "channelId" in fetchChannelId
-        ? (fetchChannelId as { channelId: string }).channelId
-        : fetchChannelId;
-    const contentList = await youtubeContentList(auth, channelId as string);
+    // const fetchChannelId = getChannelId(req);
+    // const channelId =
+    //   typeof fetchChannelId === "object" &&
+    //   !!fetchChannelId &&
+    //   "channelId" in fetchChannelId
+    //     ? (fetchChannelId as { channelId: string }).channelId
+    //     : fetchChannelId;
+    // const contentList = await youtubeContentList(auth, channelId as string);
+    const contentList = await youtubeContentList(auth);
 
     for (const video of contentList) {
       const title = video?.snippet?.title;
       const videoId = video.snippet?.resourceId?.videoId;
       const logMessage = `\n📹 Checking video: ${title} (ID: ${videoId})`;
       console.log(logMessage);
-      logs.push(logMessage);
+      logCallback(logMessage); // Send log in real-time
 
-      const spamComments = await fetchComments(req, auth, videoId, logs);
+      const spamComments = await fetchComments(
+        req,
+        auth,
+        videoId,
+        [],
+        logCallback
+      );
 
       if (spamComments.length > 0) {
         const spamLog = `🚫 Found ${spamComments.length} spam comments. Deleting...`;
         console.log(spamLog);
-        logs.push(spamLog);
+        logCallback(spamLog); // Send log in real-time
 
-        await deleteComments(auth, spamComments);
+        await deleteComments(auth, spamComments, logCallback);
 
         const deleteLog = "✅ Spam comments deleted.";
         console.log(deleteLog);
-        logs.push(deleteLog);
+        logCallback(deleteLog); // Send log in real-time
       } else {
         const noSpamLog = "✅ No spam comments found.";
         console.log(noSpamLog);
-        logs.push(noSpamLog);
+        logCallback(noSpamLog); // Send log in real-time
       }
     }
-
-    // Write logs to file
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const logFileName = `${channelId}-${timestamp}.log`;
-    const logFilePath = path.join("logs", logFileName);
-
-    // Ensure the logs directory exists
-    // fs.mkdirSync(path.dirname(logFilePath), { recursive: true });
-
-    // fs.writeFileSync(logFilePath, logs.join("\n"), "utf-8");
-    console.log(`Logs written to ${logFilePath}`);
-    return logs;
   } catch (error) {
     const errorLog = `Error running script: ${(error as Error).message}`;
     console.error(errorLog);
-    logs.push(errorLog);
-
-    // Write logs to file even if there's an error
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const logFileName = `error-${timestamp}.log`;
-    const logFilePath = path.join("logs", logFileName);
-
-    // fs.mkdirSync(path.dirname(logFilePath), { recursive: true });
-
-    // fs.writeFileSync(logFilePath, logs.join("\n"), "utf-8");
-    console.log(`Error logs written to ${logFilePath}`);
-    return logs;
+    logCallback(errorLog); // Send error log in real-time
+    throw error;
   }
 }
 

@@ -1,21 +1,46 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { doDeleteJudolComment } from "@/utils/comments";
 
+export const dynamic = 'force-dynamic';
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (req.method !== "POST") {
+  if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+
+  // Send a keep-alive message every 30 seconds to prevent timeouts
+  const keepAliveInterval = setInterval(() => {
+    res.write(`data: ${JSON.stringify({ log: "💓 Keep-alive" })}\n\n`);
+    res.flushHeaders; // Ensure the keep-alive message is sent immediately`
+  }, 30000);
+
   try {
-    const logs = await doDeleteJudolComment(req, res);
-    return res
-      .status(200)
-      .json({ message: "Judol comments deleted successfully", logs });
+    await doDeleteJudolComment(req, res, (log: string) => {
+      res.write(`data: ${JSON.stringify({ log })}\n\n`);
+      res.flushHeaders; // Ensure each log is sent immediately
+    });
+    res.write(
+      `data: ${JSON.stringify({ log: "✅✅✅ Process completed." })}\n\n`
+    );
+    res.flushHeaders; // Ensure the completion message is sent immediately
+    res.end();
   } catch (error) {
     console.error("Error deleting Judol comments:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    res.write(
+      `data: ${JSON.stringify({
+        log: `❌ Error: ${(error as Error).message}`,
+      })}\n\n`
+    );
+    res.flushHeaders; // Ensure the error message is sent immediately
+    res.end();
+  } finally {
+    clearInterval(keepAliveInterval);
   }
 }

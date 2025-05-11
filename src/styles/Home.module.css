@@ -93,9 +93,14 @@ a.secondary {
 }
 
 .footer {
-  grid-row-start: 3;
   display: flex;
-  gap: 24px;
+  justify-content: center;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  align-items: center;
+  margin-top: auto;
+  padding: 32px 0;
+  gap: 4px;
 }
 
 .footer a {
@@ -154,11 +159,11 @@ a.secondary {
     min-width: auto;
   }
 
-  .footer {
+  /* .footer {
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-  }
+  } */
 }
 
 @media (prefers-color-scheme: dark) {

@@ -1,15 +1,17 @@
 import { google } from "googleapis";
-import { getCredential } from "./credentials";
+// import { getCredential } from "./credentials";
 import { getToken, setToken } from "./token";
 
 const redirect_uris = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URIS;
 const SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"];
 
 async function handleGoogleAuth(req: any, res: any) {
-  const credentials = getCredential(req);
-  const parsedCredentials =
-    typeof credentials === "string" ? JSON.parse(credentials) : credentials;
-  const { client_secret, client_id } = parsedCredentials.installed;
+  // const credentials = getCredential(req);
+  // const parsedCredentials =
+  //   typeof credentials === "string" ? JSON.parse(credentials) : credentials;
+  // const { client_secret, client_id } = parsedCredentials.web;
+  const credentialsWeb = process.env.NEXT_PUBLIC_GOOGLE_CREDENTIALS;
+  const { client_secret, client_id } = JSON.parse(credentialsWeb || "{}").web;
 
   const oAuth2Client = new google.auth.OAuth2(
     client_id,
@@ -62,7 +64,25 @@ async function handleGoogleAuth(req: any, res: any) {
     return oAuth2Client;
   }
 
+  if (req.method === "DELETE") {
+    try {
+      const token = getToken(req);
+      if (!token) {
+        return res.status(400).json({ error: "No token found to revoke" });
+      }
+
+      const parsedToken = typeof token === "string" ? JSON.parse(token) : token;
+      // const postData = parsedToken.access_token;
+
+      const response = oAuth2Client.revokeCredentials(parsedToken.access_token);
+      console.log("Response from revokeToken:", response);
+      return response;
+    } catch (error) {
+      console.error("Error revoking token:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  }
+
   return res.status(405).json({ error: "Method not allowed" });
 }
-
 export { handleGoogleAuth };

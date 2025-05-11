@@ -8,6 +8,7 @@ import { Check, Delete, Google, Logout, Save } from "@mui/icons-material";
 import { google } from "googleapis";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { get } from "http";
+import Image from "next/image";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +29,8 @@ export default function Home() {
   const [isCredentialAvailable, setIsCredentialAvailable] =
     React.useState<boolean>(false);
   const [isTokenAvailable, setIsTokenAvailable] =
+    React.useState<boolean>(false);
+  const [isRefreshTokenAvailable, setIsRefreshTokenAvailable] =
     React.useState<boolean>(false);
   const [isChannelIdAvailable, setIsChannelIdAvailable] =
     React.useState<boolean>(false);
@@ -151,6 +154,11 @@ export default function Home() {
         setIsTokenAvailable(true);
       } else {
         setIsTokenAvailable(false);
+      }
+      if (data.haveRefreshToken) {
+        setIsRefreshTokenAvailable(true);
+      } else {
+        setIsRefreshTokenAvailable(false);
       }
     } catch (error) {
       console.error("Error getting token:", error);
@@ -294,6 +302,12 @@ export default function Home() {
             "Content-Type": "application/json",
           },
         }),
+        fetch("/api/google-oauth-revoke", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }),
       ])
         .then((responses) => {
           responses.forEach((response) => {
@@ -303,6 +317,7 @@ export default function Home() {
           });
           console.log("Logout successful");
           setIsLogout(true);
+          // window.open("https://myaccount.google.com/permissions", "_blank");
         })
         .catch((error) => {
           console.error("Error during logout:", error);
@@ -324,21 +339,24 @@ export default function Home() {
   }, [isLogout]);
 
   const handleDeleteJudolComments = async () => {
-    try {
-      const response = await fetch("/api/do-delete-judol-comments", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await response.json();
-      console.log("Response from server:", data);
-      if (data.logs && data.message) {
-        setLogList(data.logs);
-      }
-    } catch (error) {
-      console.error("Error deleting judol comments:", error);
-    }
+    setLogList([]);
+    // const eventSource = new EventSource("/api/do-delete-judol-comments-new");
+    const eventSource = new EventSource("/api/do-delete-judol-comments");
+
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setLogList((prevLogs) => [...prevLogs, data.log]);
+    };
+
+    eventSource.onerror = (error) => {
+      // console.error("Error with SSE:", error);
+      // setLogList((prevLogs) => [...prevLogs, "❌ An error occurred."]);
+      eventSource.close();
+    };
+
+    eventSource.onopen = () => {
+      console.log("SSE connection opened.");
+    };
   };
 
   return (
@@ -357,30 +375,49 @@ export default function Home() {
       >
         <SpeedInsights />
         <main className={styles.main}>
-          {/* <Typography variant="h3">Judol Slayer Main Content</Typography> */}
-          {!isCredentialAvailable ? (
-            <Upload onFileChange={onFileChange} />
-          ) : !isTokenAvailable ? (
-            <Box display={"flex"} flexDirection="column" gap={1.5}>
-              <Typography variant="subtitle1">
-                Credential is already set, wanna change credential?
-              </Typography>
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleDeleteCredential}
-                startIcon={<Delete />}
-                // sx={{
-                //   backgroundColor: "red",
-                //   color: "white",
-                //   "&:hover": {
-                //     backgroundColor: "darkred",
-                //   },
-                // }}
+          <Typography textAlign={"center"} variant="h4">Judol Slayer Project</Typography>
+          {isRefreshTokenAvailable 
+          // &&!isCredentialAvailable 
+          &&!isTokenAvailable 
+          ? (
+            <Typography>
+              Please{" "}
+              <Typography
+                component="a"
+                color="primary"
+                href="https://myaccount.google.com/permissions"
+                target="_blank"
+                sx={{ textDecoration: "underline" }}
               >
-                Change Credential
-              </Button>
-            </Box>
+                Revoke This App Access
+              </Typography>{" "}
+              if you don't want to use this app anymore!
+            </Typography>
+          ) : null}
+          {!isCredentialAvailable ? (
+            <Upload onFileChange={onFileChange} width={"100%"} />
+          ) : !isTokenAvailable ? (
+            // <Box display={"flex"} flexDirection="column" gap={1.5}>
+            //   <Typography variant="subtitle1">
+            //     Credential is already set, wanna change credential?
+            //   </Typography>
+            //   <Button
+            //     variant="contained"
+            //     color="error"
+            //     onClick={handleDeleteCredential}
+            //     startIcon={<Delete />}
+            //     // sx={{
+            //     //   backgroundColor: "red",
+            //     //   color: "white",
+            //     //   "&:hover": {
+            //     //     backgroundColor: "darkred",
+            //     //   },
+            //     // }}
+            //   >
+            //     Change Credential
+            //   </Button>
+            // </Box>
+            null
           ) : null}
           {isCredentialAvailable ? (
             <Button
@@ -395,7 +432,7 @@ export default function Home() {
             </Button>
           ) : null}
           <Box display={"flex"} flexDirection="column" gap={1.5}>
-            <label htmlFor="channel-id">
+            {/* <label htmlFor="channel-id">
               {
                 <>
                   You can get your (
@@ -423,8 +460,8 @@ export default function Home() {
                 backgroundColor: "white",
                 borderRadius: "4px",
               }}
-            />
-            <Box
+            /> */}
+            {/* <Box
               display={"flex"}
               flexDirection="row"
               gap={1.5}
@@ -433,6 +470,7 @@ export default function Home() {
             >
               {isChannelIdAvailable ? (
                 <Button
+                  fullWidth
                   variant="contained"
                   color="error"
                   startIcon={<Delete />}
@@ -446,6 +484,7 @@ export default function Home() {
               <Button
                 variant="contained"
                 color="primary"
+                fullWidth
                 startIcon={<Save />}
                 disabled={!channelId}
                 onClick={() => {
@@ -454,13 +493,16 @@ export default function Home() {
               >
                 Submit Channel ID
               </Button>
-            </Box>
-            {isTokenAvailable && isCredentialAvailable && isChannelIdAvailable ? (
+            </Box> */}
+            {isTokenAvailable &&
+            isCredentialAvailable 
+            // && isChannelIdAvailable 
+            ? (
               <Button
                 variant="contained"
                 color="success"
                 startIcon={<Check />}
-                disabled={!channelId}
+                // disabled={!channelId}
                 onClick={() => {
                   handleDeleteJudolComments();
                 }}
@@ -507,23 +549,47 @@ export default function Home() {
               {JSON.stringify(credentialJson, null, 2)}
             </Typography>
           )} */}
-        </main>
-        {/* <footer className={styles.footer}>
-          <a
-            href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              aria-hidden
-              src="/file.svg"
-              alt="File icon"
-              width={16}
-              height={16}
-            />
-            Learn
-          </a>
-          <a
+          <footer className={styles.footer}>
+            <Typography>
+              &copy; {new Date().getFullYear()} Judol Slayer by
+            </Typography>
+            <Typography
+              component="a"
+              color="primary"
+              href="https://frisrsyd.github.io/Portfolio/"
+              target="_blank"
+              sx={{ textDecoration: "underline", display: "inline" }}
+            >
+              frisrsyd
+            </Typography>
+            <Typography
+            // component="a"
+            // color="primary"
+            // href="https://frisrsyd.github.io/Portfolio/"
+            // target="_blank"
+            // sx={{ textDecoration: "underline", display: "inline" }}
+            >
+              and
+            </Typography>
+            <Typography
+              component="a"
+              color="primary"
+              href="https://github.com/MBenedictt"
+              target="_blank"
+              sx={{ textDecoration: "underline", display: "inline" }}
+            >
+              MBenedictt
+            </Typography>
+            <Typography
+            // component="a"
+            // color="primary"
+            // href="https://frisrsyd.github.io/Portfolio/"
+            // target="_blank"
+            // sx={{ textDecoration: "underline", display: "inline" }}
+            >
+              for base algothims
+            </Typography>
+            {/* <a
             href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
             target="_blank"
             rel="noopener noreferrer"
@@ -550,8 +616,9 @@ export default function Home() {
               height={16}
             />
             Go to nextjs.org →
-          </a>
-        </footer> */}
+          </a> */}
+          </footer>
+        </main>
       </div>
     </>
   );
