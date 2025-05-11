@@ -32,6 +32,7 @@ export default function Home() {
   const [isChannelIdAvailable, setIsChannelIdAvailable] =
     React.useState<boolean>(false);
   const [isLogout, setIsLogout] = React.useState<boolean>(false);
+  const [logList, setLogList] = React.useState<string[]>([]);
 
   const onFileChange = (file: FileList | null) => {
     if (!!file?.length) {
@@ -316,6 +317,9 @@ export default function Home() {
     if (isLogout) {
       checkCredentialIsValid();
       tokenIsValid();
+      getChannelId();
+      setIsLogout(false);
+      setLogList([]);
     }
   }, [isLogout]);
 
@@ -329,6 +333,9 @@ export default function Home() {
       });
       const data = await response.json();
       console.log("Response from server:", data);
+      if (data.logs && data.message) {
+        setLogList(data.logs);
+      }
     } catch (error) {
       console.error("Error deleting judol comments:", error);
     }
@@ -448,17 +455,52 @@ export default function Home() {
                 Submit Channel ID
               </Button>
             </Box>
-            <Button
-              variant="contained"
-              color="success"
-              startIcon={<Check />}
-              disabled={!channelId}
-              onClick={() => {
-                handleDeleteJudolComments();
-              }}
-            >
-              LETS SLAYER JUDOL COMMENTS
-            </Button>
+            {isTokenAvailable && isCredentialAvailable && !!channelId ? (
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<Check />}
+                disabled={!channelId}
+                onClick={() => {
+                  handleDeleteJudolComments();
+                }}
+              >
+                LETS SLAYER JUDOL COMMENTS
+              </Button>
+            ) : null}
+            {!!logList.length ? (
+              <Box
+                display={"flex"}
+                flexDirection="column"
+                gap={1.5}
+                justifyContent={"left"}
+                alignItems={"left"}
+                sx={{
+                  maxHeight: "50dvh",
+                  overflowY: "auto",
+                  width: "100%",
+                  padding: "8px",
+                  backgroundColor: "rgba(255, 255, 255, 0.8)",
+                  borderRadius: "4px",
+                  boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                }}
+              >
+                {logList.map((log, index) => (
+                  <Typography
+                    key={index}
+                    variant="subtitle2"
+                    sx={{
+                      backgroundColor: "white",
+                      borderRadius: "4px",
+                      padding: "8px",
+                      width: "100%",
+                    }}
+                  >
+                    {log}
+                  </Typography>
+                ))}
+              </Box>
+            ) : null}
           </Box>
           {/* {!!credentialJson && (
             <Typography variant="subtitle2">

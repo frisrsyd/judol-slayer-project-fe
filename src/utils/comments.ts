@@ -5,7 +5,12 @@ import { google } from "googleapis";
 import * as fs from "fs";
 import * as path from "path";
 
-async function fetchComments(req: any, auth: any, VIDEO_ID: any) {
+async function fetchComments(
+  req: any,
+  auth: any,
+  VIDEO_ID: any,
+  logs: string[]
+) {
   const youtube = google.youtube({ version: "v3", auth });
 
   try {
@@ -22,10 +27,14 @@ async function fetchComments(req: any, auth: any, VIDEO_ID: any) {
       const commentText = comment?.textDisplay;
       const commentId = item.id;
 
-      console.log(`Checking comment: "${commentText}"`);
+      const checkLog = `Checking comment: "${commentText}"`;
+      console.log(checkLog);
+      logs.push(checkLog);
 
       if (getJudolComment(commentText as string, req)) {
-        console.log(`🚨 Spam detected: "${commentText}"`);
+        const spamLog = `🚨 Spam detected: "${commentText}"`;
+        console.log(spamLog);
+        logs.push(spamLog);
         spamComments.push(commentId);
       }
     });
@@ -143,7 +152,7 @@ async function doDeleteJudolComment(req: any, res: any) {
       console.log(logMessage);
       logs.push(logMessage);
 
-      const spamComments = await fetchComments(req, auth, videoId);
+      const spamComments = await fetchComments(req, auth, videoId, logs);
 
       if (spamComments.length > 0) {
         const spamLog = `🚫 Found ${spamComments.length} spam comments. Deleting...`;
@@ -168,10 +177,11 @@ async function doDeleteJudolComment(req: any, res: any) {
     const logFilePath = path.join("logs", logFileName);
 
     // Ensure the logs directory exists
-    fs.mkdirSync(path.dirname(logFilePath), { recursive: true });
+    // fs.mkdirSync(path.dirname(logFilePath), { recursive: true });
 
-    fs.writeFileSync(logFilePath, logs.join("\n"), "utf-8");
+    // fs.writeFileSync(logFilePath, logs.join("\n"), "utf-8");
     console.log(`Logs written to ${logFilePath}`);
+    return logs;
   } catch (error) {
     const errorLog = `Error running script: ${(error as Error).message}`;
     console.error(errorLog);
@@ -182,10 +192,11 @@ async function doDeleteJudolComment(req: any, res: any) {
     const logFileName = `error-${timestamp}.log`;
     const logFilePath = path.join("logs", logFileName);
 
-    fs.mkdirSync(path.dirname(logFilePath), { recursive: true });
+    // fs.mkdirSync(path.dirname(logFilePath), { recursive: true });
 
-    fs.writeFileSync(logFilePath, logs.join("\n"), "utf-8");
+    // fs.writeFileSync(logFilePath, logs.join("\n"), "utf-8");
     console.log(`Error logs written to ${logFilePath}`);
+    return logs;
   }
 }
 
