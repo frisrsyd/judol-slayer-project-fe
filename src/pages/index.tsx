@@ -27,13 +27,13 @@ export default function Home() {
   > | null>(null);
   const [channelId, setChannelId] = React.useState<string | null>(null);
   const [isCredentialAvailable, setIsCredentialAvailable] =
-    React.useState<boolean>(false);
+    React.useState<boolean>(true);
   const [isTokenAvailable, setIsTokenAvailable] =
     React.useState<boolean>(false);
   const [isRefreshTokenAvailable, setIsRefreshTokenAvailable] =
     React.useState<boolean>(false);
   const [isChannelIdAvailable, setIsChannelIdAvailable] =
-    React.useState<boolean>(false);
+    React.useState<boolean>(true);
   const [isLogout, setIsLogout] = React.useState<boolean>(false);
   const [logList, setLogList] = React.useState<string[]>([]);
 
