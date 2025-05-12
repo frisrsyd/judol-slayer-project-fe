@@ -68,10 +68,7 @@
   padding: 0 20px;
   border: none;
   border: 1px solid transparent;
-  transition:
-    background 0.2s,
-    color 0.2s,
-    border-color 0.2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -94,19 +91,25 @@ a.secondary {
 
 .footer {
   display: flex;
+  position: absolute;
+  bottom: 0;
   justify-content: center;
-  flex-wrap: nowrap;
+  /* flex-wrap: nowrap; */
   flex-direction: row;
   align-items: center;
-  margin-top: auto;
+  margin-top: 8;
+  left: 0;
+  right: 0;
   padding: 32px 0;
   gap: 4px;
+  width: 100%;
+  background-color: #383838;
 }
 
 .footer a {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 2px;
 }
 
 .footer img {
@@ -128,6 +131,7 @@ a.secondary {
   .footer a:hover {
     text-decoration: underline;
     text-underline-offset: 4px;
+    color: #0288d1;
   }
 }
 

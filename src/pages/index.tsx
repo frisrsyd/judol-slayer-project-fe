@@ -4,7 +4,15 @@ import styles from "@/styles/Home.module.css";
 import { Box, Button, TextField, Typography } from "@mui/material";
 import Upload from "@/components/Upload";
 import * as React from "react";
-import { Check, Delete, Google, Logout, Save } from "@mui/icons-material";
+import {
+  Check,
+  Delete,
+  GitHub,
+  Google,
+  Logout,
+  Save,
+  Web,
+} from "@mui/icons-material";
 import { google } from "googleapis";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { get } from "http";
@@ -368,7 +376,10 @@ export default function Home() {
           content="Judol Slayer UI Project improvement"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="google-site-verification" content="eDhx04SCQ6SH_tjtQfb41rHqo3RtbBsY2YMfyyRvuSU" />
+        <meta
+          name="google-site-verification"
+          content="eDhx04SCQ6SH_tjtQfb41rHqo3RtbBsY2YMfyyRvuSU"
+        />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div
@@ -376,11 +387,12 @@ export default function Home() {
       >
         <SpeedInsights />
         <main className={styles.main}>
-          <Typography textAlign={"center"} variant="h4">Judol Slayer Project</Typography>
-          {isRefreshTokenAvailable 
-          // &&!isCredentialAvailable 
-          &&!isTokenAvailable 
-          ? (
+          <Typography textAlign={"center"} variant="h4">
+            Judol Slayer Project
+          </Typography>
+          {isRefreshTokenAvailable &&
+          // &&!isCredentialAvailable
+          !isTokenAvailable ? (
             <Typography>
               Please{" "}
               <Typography
@@ -397,29 +409,22 @@ export default function Home() {
           ) : null}
           {!isCredentialAvailable ? (
             <Upload onFileChange={onFileChange} width={"100%"} />
-          ) : !isTokenAvailable ? (
-            // <Box display={"flex"} flexDirection="column" gap={1.5}>
-            //   <Typography variant="subtitle1">
-            //     Credential is already set, wanna change credential?
-            //   </Typography>
-            //   <Button
-            //     variant="contained"
-            //     color="error"
-            //     onClick={handleDeleteCredential}
-            //     startIcon={<Delete />}
-            //     // sx={{
-            //     //   backgroundColor: "red",
-            //     //   color: "white",
-            //     //   "&:hover": {
-            //     //     backgroundColor: "darkred",
-            //     //   },
-            //     // }}
-            //   >
-            //     Change Credential
-            //   </Button>
-            // </Box>
-            null
-          ) : null}
+          ) : !isTokenAvailable ? //     variant="contained" //   <Button //   </Typography> //     Credential is already set, wanna change credential? //   <Typography variant="subtitle1"> // <Box display={"flex"} flexDirection="column" gap={1.5}>
+          //     color="error"
+          //     onClick={handleDeleteCredential}
+          //     startIcon={<Delete />}
+          //     // sx={{
+          //     //   backgroundColor: "red",
+          //     //   color: "white",
+          //     //   "&:hover": {
+          //     //     backgroundColor: "darkred",
+          //     //   },
+          //     // }}
+          //   >
+          //     Change Credential
+          //   </Button>
+          // </Box>
+          null : null}
           {isCredentialAvailable ? (
             <Button
               variant="contained"
@@ -495,10 +500,8 @@ export default function Home() {
                 Submit Channel ID
               </Button>
             </Box> */}
-            {isTokenAvailable &&
-            isCredentialAvailable 
-            // && isChannelIdAvailable 
-            ? (
+            {isTokenAvailable && isCredentialAvailable ? (
+              // && isChannelIdAvailable
               <Button
                 variant="contained"
                 color="success"
@@ -550,47 +553,52 @@ export default function Home() {
               {JSON.stringify(credentialJson, null, 2)}
             </Typography>
           )} */}
-          <footer className={styles.footer}>
-            <Typography>
-              &copy; {new Date().getFullYear()} Judol Slayer by
-            </Typography>
-            <Typography
-              component="a"
-              color="primary"
-              href="https://frisrsyd.github.io/Portfolio/"
-              target="_blank"
-              sx={{ textDecoration: "underline", display: "inline" }}
-            >
-              frisrsyd
-            </Typography>
-            <Typography
+        </main>
+        <footer className={styles.footer}>
+          <Typography sx={{ color: "white" }}>
+            &copy; {new Date().getFullYear()} Judol Slayer by
+          </Typography>
+          <Typography
+            component="a"
+            color="info"
+            href="https://frisrsyd.github.io/Portfolio/"
+            target="_blank"
+            sx={{ display: "inline" }}
+          >
+            <Web />
+            frisrsyd
+          </Typography>
+          <Typography
+            sx={{ color: "white" }}
             // component="a"
             // color="primary"
             // href="https://frisrsyd.github.io/Portfolio/"
             // target="_blank"
             // sx={{ textDecoration: "underline", display: "inline" }}
-            >
-              and
-            </Typography>
-            <Typography
-              component="a"
-              color="primary"
-              href="https://github.com/MBenedictt"
-              target="_blank"
-              sx={{ textDecoration: "underline", display: "inline" }}
-            >
-              MBenedictt
-            </Typography>
-            <Typography
+          >
+            and
+          </Typography>
+          <Typography
+            component="a"
+            color="info"
+            href="https://github.com/MBenedictt"
+            target="_blank"
+            sx={{ display: "inline" }}
+          >
+            <GitHub />
+            MBenedictt
+          </Typography>
+          <Typography
             // component="a"
             // color="primary"
             // href="https://frisrsyd.github.io/Portfolio/"
             // target="_blank"
             // sx={{ textDecoration: "underline", display: "inline" }}
-            >
-              for base algothims
-            </Typography>
-            {/* <a
+            sx={{ color: "white" }}
+          >
+            for base algothims
+          </Typography>
+          {/* <a
             href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
             target="_blank"
             rel="noopener noreferrer"
@@ -618,8 +626,7 @@ export default function Home() {
             />
             Go to nextjs.org →
           </a> */}
-          </footer>
-        </main>
+        </footer>
       </div>
     </>
   );
