@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { setChannelId } from "../../../utils/channel-id";
+import { setBlockedWords } from "../../../utils/blocked-words";
 
 export default async function handler(
   req: NextApiRequest,
@@ -9,15 +9,15 @@ export default async function handler(
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { channelId } = req.body;
+  const { blockedWords } = req.body;
 
-  if (!channelId) {
-    return res.status(400).json({ error: "Channel ID is required" });
+  if (!blockedWords) {
+    return res.status(400).json({ error: "blockedWords is required" });
   }
 
   try {
-    setChannelId({ channelId }, res);
-    return res.status(200).json({ message: "Channel ID set successfully" });
+    setBlockedWords({ blockedWords }, res);
+    return res.status(200).json({ message: "blockedWords set successfully" });
   } catch (error) {
     console.error("Error setting channel ID:", error);
     return res.status(500).json({ error: "Internal server error" });

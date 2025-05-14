@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getChannelId } from "../../../utils/channel-id";
+import { getBlockedWords } from "../../../utils/blocked-words";
 
 export default async function handler(
   req: NextApiRequest,
@@ -10,11 +10,11 @@ export default async function handler(
   }
 
   try {
-    const channelId = getChannelId(req);
-    console.log("channelId: ", channelId);
-    return res.status(200).json(channelId);
+    const blockedWords = getBlockedWords(req);
+    console.log("blockedWords: ", blockedWords);
+    return res.status(200).json(blockedWords);
   } catch (error) {
-    console.error("Error retrieving channel ID:", error);
+    console.error("Error retrieving blockedWords:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 }

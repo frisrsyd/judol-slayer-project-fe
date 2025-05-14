@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { deleteChannelId } from "../../../utils/channel-id";
+import { deleteBlockedWords } from "../../../utils/blocked-words";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "DELETE") {
@@ -7,10 +7,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    deleteChannelId(res);
+    deleteBlockedWords(res);
     return res.status(200).json({ message: "Channel ID deleted successfully" });
   } catch (error) {
-    console.error("Error deleting channel ID:", error);
+    console.error("Error deleting blockedWords:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 }

@@ -1,11 +1,19 @@
 import Head from "next/head";
 import { Geist, Geist_Mono } from "next/font/google";
 import styles from "@/styles/Home.module.css";
-import { Box, Button, TextField, Typography } from "@mui/material";
+import {
+  Autocomplete,
+  Box,
+  Button,
+  Checkbox,
+  TextField,
+  Typography,
+} from "@mui/material";
 import Upload from "@/components/Upload";
 import * as React from "react";
 import {
   Check,
+  CheckBox,
   Delete,
   GitHub,
   Google,
@@ -17,6 +25,7 @@ import { google } from "googleapis";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { get } from "http";
 import Image from "next/image";
+import { KatanaIcon } from "../../public/katana";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,124 +38,14 @@ const geistMono = Geist_Mono({
 });
 
 export default function Home() {
-  const [credentialJson, setcredentialJson] = React.useState<Record<
-    string,
-    any
-  > | null>(null);
-  const [channelId, setChannelId] = React.useState<string | null>(null);
-  const [isCredentialAvailable, setIsCredentialAvailable] =
-    React.useState<boolean>(true);
+  const [blockedWords, setBlockedWords] = React.useState<string[]>([]);
   const [isTokenAvailable, setIsTokenAvailable] =
     React.useState<boolean>(false);
   const [isRefreshTokenAvailable, setIsRefreshTokenAvailable] =
     React.useState<boolean>(false);
-  const [isChannelIdAvailable, setIsChannelIdAvailable] =
-    React.useState<boolean>(true);
   const [isLogout, setIsLogout] = React.useState<boolean>(false);
   const [logList, setLogList] = React.useState<string[]>([]);
-
-  const onFileChange = (file: FileList | null) => {
-    if (!!file?.length) {
-      const selectedFile = file[0];
-      console.log("File selected:", selectedFile);
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const json = JSON.parse(event.target?.result as string);
-          console.log("JSON content:", json);
-          setcredentialJson(json);
-        } catch (error) {
-          console.error("Error parsing JSON:", error);
-        }
-      };
-      reader.readAsText(selectedFile); // Uncommented to read the file content
-      console.log("this line after read as text of json");
-    }
-  };
-
-  const handleDeleteCredential = async () => {
-    try {
-      const response = await fetch("/api/credential/delete", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await response.json();
-      console.log("Response from server:", data);
-      checkCredentialIsValid();
-    } catch (error) {
-      console.error("Error deleting credential:", error);
-    }
-  };
-
-  const handleSaveChannelId = async (channelId: string | null) => {
-    if (channelId) {
-      try {
-        const response = await fetch("/api/channel-id/create", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ channelId }),
-        });
-        const data = await response.json();
-        getChannelId();
-        console.log("Response from server:", data);
-      } catch (error) {
-        console.error("Error saving channel ID:", error);
-      }
-    }
-  };
-
-  const setCredential = async () => {
-    try {
-      const response = await fetch("/api/credential/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ credential: credentialJson }),
-      });
-      const data = await response.json();
-      checkCredentialIsValid();
-      console.log("Response from server:", data);
-    } catch (error) {
-      console.error("Error setting credential:", error);
-    }
-  };
-
-  React.useEffect(() => {
-    console.log("Credential JSON Changed:", credentialJson);
-    if (credentialJson) {
-      setCredential();
-    }
-  }, [credentialJson]);
-
-  const checkCredentialIsValid = async () => {
-    try {
-      const response = await fetch("/api/credential/verify", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await response.json();
-      console.log("Response from server:", data);
-      if (data.isValid) {
-        setIsCredentialAvailable(true);
-      } else {
-        setIsCredentialAvailable(false);
-      }
-    } catch (error) {
-      console.error("Error getting credential:", error);
-    }
-  };
-
-  React.useEffect(() => {
-    checkCredentialIsValid();
-  }, []);
+  const [loginLoading, setLoginLoading] = React.useState<boolean>(false);
 
   const tokenIsValid = async () => {
     try {
@@ -173,13 +72,9 @@ export default function Home() {
     }
   };
 
-  React.useEffect(() => {
-    tokenIsValid();
-  }, []);
-
-  const getChannelId = async () => {
+  const getBlockedWords = async () => {
     try {
-      const response = await fetch("/api/channel-id/read", {
+      const response = await fetch("/api/blocked-words/read", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -187,37 +82,20 @@ export default function Home() {
       });
       const data = await response.json();
       console.log("Response from server:", data);
-      setIsChannelIdAvailable(!!data.channelId);
-      setChannelId(data.channelId);
+      console.log("Blocked words:", data.blockedWords);
+      setBlockedWords(data.blockedWords);
     } catch (error) {
-      console.error("Error getting channel ID:", error);
+      console.error("Error getting blockedWords:", error);
     }
   };
 
   React.useEffect(() => {
-    getChannelId();
+    getBlockedWords();
   }, []);
-
-  const handleDeleteChannelId = async (channelId: string | null) => {
-    if (channelId) {
-      try {
-        const response = await fetch("/api/channel-id/delete", {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        const data = await response.json();
-        console.log("Response from server:", data);
-        getChannelId();
-      } catch (error) {
-        console.error("Error deleting channel ID:", error);
-      }
-    }
-  };
 
   const handleLoginOauthGoogle = async () => {
     try {
+      setLoginLoading(true);
       // Step 1: Get the Google OAuth URL
       const response = await fetch("/api/google-oauth", {
         method: "GET",
@@ -241,6 +119,7 @@ export default function Home() {
               console.error(
                 "Popup closed before completing the login process."
               );
+              // setLoginLoading(false);
               return;
             }
 
@@ -250,7 +129,7 @@ export default function Home() {
             if (code) {
               clearInterval(interval);
               popup?.close();
-
+              
               // Step 4: Send the authorization code to the API
               const tokenResponse = await fetch("/api/google-oauth", {
                 method: "POST",
@@ -259,52 +138,34 @@ export default function Home() {
                 },
                 body: JSON.stringify({ code }),
               });
-
+              
               const tokenData = await tokenResponse.json();
               console.log("Token response from server:", tokenData);
-              checkCredentialIsValid();
               tokenIsValid();
+              // setLoginLoading(false);
             }
           } catch (error) {
+            setLoginLoading(false);
+            console.error("Error during login process:", error);
             // Ignore cross-origin errors until the popup redirects to the same origin
           }
         }, 500);
       } else {
         console.log(data.message);
-        checkCredentialIsValid();
         tokenIsValid();
+        // setLoginLoading(false);
       }
     } catch (error) {
+      setLoginLoading(false);
       console.error("Error logging in with Google:", error);
     }
   };
 
   const handleLogout = async () => {
     try {
-      // const response = await fetch("/api/logout", {
-      //   method: "DELETE",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      // });
-      // const data = await response.json();
-      // console.log("Response from server:", data);
-      // checkCredentialIsValid();
-      // tokenIsValid();
+      setLoginLoading(true);
       Promise.all([
         fetch("/api/token/delete", {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }),
-        fetch("/api/credential/delete", {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }),
-        fetch("/api/channel-id/delete", {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
@@ -320,17 +181,21 @@ export default function Home() {
         .then((responses) => {
           responses.forEach((response) => {
             if (!response.ok) {
+              setLoginLoading(false);
               throw new Error("Network response was not ok");
             }
           });
           console.log("Logout successful");
           setIsLogout(true);
+          setLoginLoading(false);
           // window.open("https://myaccount.google.com/permissions", "_blank");
         })
         .catch((error) => {
+          setLoginLoading(false);
           console.error("Error during logout:", error);
         });
     } catch (error) {
+      setLoginLoading(false);
       console.error("Error logging out:", error);
     }
   };
@@ -338,9 +203,7 @@ export default function Home() {
   React.useEffect(() => {
     console.log("isLogout:", isLogout);
     if (isLogout) {
-      checkCredentialIsValid();
       tokenIsValid();
-      getChannelId();
       setIsLogout(false);
       setLogList([]);
     }
@@ -367,6 +230,31 @@ export default function Home() {
     };
   };
 
+  const onBlockedWordsChange = async (updatedWords: string[]) => {
+    console.log("Blocked words changed:", updatedWords);
+    setBlockedWords(updatedWords);
+
+    try {
+      const response = await fetch("/api/blocked-words/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ blockedWords: updatedWords }),
+      });
+
+      const data = await response.json();
+      console.log("Response from server:", data);
+    } catch (error) {
+      console.error("Error saving blocked words:", error);
+    }
+  };
+
+  React.useEffect(() => {
+    tokenIsValid();
+    getBlockedWords();
+  }, [logList]);
+
   return (
     <>
       <Head>
@@ -390,9 +278,7 @@ export default function Home() {
           <Typography textAlign={"center"} variant="h4">
             Judol Slayer Project
           </Typography>
-          {isRefreshTokenAvailable &&
-          // &&!isCredentialAvailable
-          !isTokenAvailable ? (
+          {isRefreshTokenAvailable && !isTokenAvailable ? (
             <Typography>
               Please{" "}
               <Typography
@@ -407,111 +293,78 @@ export default function Home() {
               if you don't want to use this app anymore!
             </Typography>
           ) : null}
-          {!isCredentialAvailable ? (
-            <Upload onFileChange={onFileChange} width={"100%"} />
-          ) : !isTokenAvailable ? //     variant="contained" //   <Button //   </Typography> //     Credential is already set, wanna change credential? //   <Typography variant="subtitle1"> // <Box display={"flex"} flexDirection="column" gap={1.5}>
-          //     color="error"
-          //     onClick={handleDeleteCredential}
-          //     startIcon={<Delete />}
-          //     // sx={{
-          //     //   backgroundColor: "red",
-          //     //   color: "white",
-          //     //   "&:hover": {
-          //     //     backgroundColor: "darkred",
-          //     //   },
-          //     // }}
-          //   >
-          //     Change Credential
-          //   </Button>
-          // </Box>
-          null : null}
-          {isCredentialAvailable ? (
-            <Button
-              variant="contained"
-              color="error"
-              startIcon={!isTokenAvailable ? <Google /> : <Logout />}
-              onClick={() => {
-                !isTokenAvailable ? handleLoginOauthGoogle() : handleLogout();
-              }}
-            >
-              {!isTokenAvailable ? "Login With Google" : "Log Out"}
-            </Button>
-          ) : null}
+
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={!isTokenAvailable ? <Google /> : <Logout />}
+            onClick={() => {
+              !isTokenAvailable ? handleLoginOauthGoogle() : handleLogout();
+            }}
+            disabled={loginLoading}
+          >
+            {!isTokenAvailable ? "Login With Google" : "Log Out"}
+          </Button>
           <Box display={"flex"} flexDirection="column" gap={1.5}>
-            {/* <label htmlFor="channel-id">
-              {
-                <>
-                  You can get your (
-                  <Typography
-                    component="a"
-                    color="primary"
-                    href="https://www.youtube.com/account_advanced"
-                    target="_blank"
-                    sx={{ textDecoration: "underline" }}
-                  >
-                    channel ID here
-                  </Typography>
-                  )
-                </>
-              }
-            </label>
-            <TextField
-              label="Channel ID"
-              id="channel-id"
-              value={channelId || ""}
-              onChange={(e) => setChannelId(e.target.value)}
-              placeholder="Enter Channel ID"
+            <Autocomplete
               fullWidth
-              sx={{
-                backgroundColor: "white",
-                borderRadius: "4px",
-              }}
-            /> */}
-            {/* <Box
-              display={"flex"}
-              flexDirection="row"
-              gap={1.5}
-              justifyContent="space-between"
-              alignItems="center"
-            >
-              {isChannelIdAvailable ? (
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="error"
-                  startIcon={<Delete />}
-                  onClick={() => {
-                    handleDeleteChannelId(channelId);
+              disablePortal
+              id="blocked-words"
+              options={[]}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Blocked Words"
+                  placeholder="Enter Blocked Words"
+                  sx={{
+                    backgroundColor: "white",
+                    borderRadius: "4px",
                   }}
-                >
-                  Delete Channel ID
-                </Button>
-              ) : null}
-              <Button
-                variant="contained"
-                color="primary"
-                fullWidth
-                startIcon={<Save />}
-                disabled={!channelId}
-                onClick={() => {
-                  handleSaveChannelId(channelId);
-                }}
-              >
-                Submit Channel ID
-              </Button>
-            </Box> */}
-            {isTokenAvailable && isCredentialAvailable ? (
-              // && isChannelIdAvailable
+                  helperText="Input blocked words and press enter to add, programm will check the similarity, this only help to reduce the word you should enter, but not 100% accurate"
+                />
+              )}
+              onChange={(event, newValue) => {
+                onBlockedWordsChange(newValue); // newValue is array
+              }}
+              onInputChange={(event) => {
+                // setBlockedWords(event);
+                // onBlockedWordsChange(event);
+              }}
+              value={blockedWords}
+              freeSolo
+              multiple
+              // options={blockedWords}
+              limitTags={10}
+              slotProps={{
+                chip: {
+                  size: "small",
+                  color: "error",
+                  // sx: {
+                  //   backgroundColor: "#951e1e",
+                  //   borderRadius: "8px",
+                  //   marginRight: 1,
+                  // },
+                },
+                listbox: {
+                  sx: {
+                    backgroundColor: "white",
+                    borderRadius: "4px",
+                    maxHeight: "50dvh",
+                    overflowY: "auto",
+                  },
+                },
+              }}
+            />
+            {isTokenAvailable ? (
               <Button
                 variant="contained"
                 color="success"
-                startIcon={<Check />}
-                // disabled={!channelId}
+                startIcon={<KatanaIcon width={20} height={20} />}
                 onClick={() => {
                   handleDeleteJudolComments();
                 }}
               >
-                LETS SLAYER JUDOL COMMENTS
+                LETS SLAY JUDOL COMMENTS
               </Button>
             ) : null}
             {!!logList.length ? (
@@ -522,7 +375,7 @@ export default function Home() {
                 justifyContent={"left"}
                 alignItems={"left"}
                 sx={{
-                  maxHeight: "50dvh",
+                  maxHeight: `calc(50dvh - 32px)`,
                   overflowY: "auto",
                   width: "100%",
                   padding: "8px",
@@ -548,11 +401,6 @@ export default function Home() {
               </Box>
             ) : null}
           </Box>
-          {/* {!!credentialJson && (
-            <Typography variant="subtitle2">
-              {JSON.stringify(credentialJson, null, 2)}
-            </Typography>
-          )} */}
         </main>
         <footer className={styles.footer}>
           <Typography sx={{ color: "white" }}>

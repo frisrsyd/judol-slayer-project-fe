@@ -1,9 +1,16 @@
 import { getBlockedWords } from "./blocked-words";
-import { getChannelId } from "./channel-id";
 import { handleGoogleAuth } from "./google";
 import { google } from "googleapis";
-import * as fs from "fs";
-import * as path from "path";
+import * as fuzz from "fuzzball";
+import { deleteToken } from "./token";
+
+function normalizeText(text: string): string {
+  return text
+    .normalize("NFKD") // normalize special unicode characters
+    .replace(/[\u0300-\u036f]/g, "") // remove diacritics
+    .replace(/[^a-zA-Z0-9]/g, "") // remove non-alphanum
+    .toLowerCase();
+}
 
 async function fetchComments(
   req: any,
@@ -33,7 +40,7 @@ async function fetchComments(
       logs.push(checkLog);
       logCallback(checkLog); // Send log in real-time
 
-      if (getJudolComment(commentText as string, req)) {
+      if (getJudolComment(commentText as string, req, logCallback)) {
         const spamLog = `🚨 Spam detected: "${commentText}"`;
         console.log(spamLog);
         logs.push(spamLog);
@@ -51,27 +58,75 @@ async function fetchComments(
   }
 }
 
-function getJudolComment(text: string, req: any) {
-  const normalizedText = text.normalize("NFKD");
-  if (text !== normalizedText) {
-    return true;
-  }
+function getJudolComment(
+  text: string,
+  req: any,
+  logCallback: (log: string) => void
+) {
+  const normalizedText = normalizeText(text);
+
+  // if (text !== normalizedText) {
+  //   return true;
+  // }
+
   const fetchBlockedWords = getBlockedWords(req);
   const blockedWords: string[] =
     typeof fetchBlockedWords === "object" && !!fetchBlockedWords
       ? (fetchBlockedWords as { blockedWords: string[] }).blockedWords
       : [];
 
-  console.log("blockedWords: ", blockedWords);
-  const lowerText = text.toLowerCase();
-
   if (!Array.isArray(blockedWords) || blockedWords.length === 0) {
+    const basicNormalizedText = text.normalize("NFKD");
+    if (text !== basicNormalizedText) {
+      return true;
+    }
     return false;
-  } else {
-    return blockedWords.some((word: string) =>
-      lowerText.includes(word.toLowerCase())
-    );
   }
+
+  for (const word of blockedWords) {
+    const normalizedWord = normalizeText(word);
+    console.log("normalizedWord: ", normalizedWord);
+
+    // Direct substring match
+    if (normalizedText.includes(normalizedWord)) {
+      console.log(
+        `Direct match found: "${normalizedText}" contains "${normalizedWord}"`
+      );
+      return true;
+    }
+
+    // Fuzzy match using fuzzball
+    const similarity = fuzz.ratio(normalizedText, normalizedWord);
+    const checkingSimilarityLogs = `[🔎] Checking "${normalizedText}" vs "${normalizedWord}" → ${similarity}`;
+    console.log(checkingSimilarityLogs);
+    logCallback(checkingSimilarityLogs); // Send log in real-time
+    if (similarity >= 75) {
+      return true;
+    }
+  }
+
+  return false;
+
+  // const normalizedText = text.normalize("NFKD");
+  // if (text !== normalizedText) {
+  //   return true;
+  // }
+  // const fetchBlockedWords = getBlockedWords(req);
+  // const blockedWords: string[] =
+  //   typeof fetchBlockedWords === "object" && !!fetchBlockedWords
+  //     ? (fetchBlockedWords as { blockedWords: string[] }).blockedWords
+  //     : [];
+
+  // console.log("blockedWords: ", blockedWords);
+  // const lowerText = text.toLowerCase();
+
+  // if (!Array.isArray(blockedWords) || blockedWords.length === 0) {
+  //   return false;
+  // } else {
+  //   return blockedWords.some((word: string) =>
+  //     lowerText.includes(word.toLowerCase())
+  //   );
+  // }
 }
 
 // Delete comments
@@ -106,13 +161,12 @@ async function deleteComments(
   } while (commentIds.length > 0);
 }
 
-async function youtubeContentList(auth: any) {
+async function youtubeContentList(auth: any, res: any) {
   const youtube = google.youtube({ version: "v3", auth });
 
   try {
     const response = await youtube.channels.list({
       part: ["contentDetails"],
-      // id: [youtubeChannelID], // ← use forUsername if you're passing a name
       mine: true,
     });
 
@@ -139,7 +193,12 @@ async function youtubeContentList(auth: any) {
     return allVideos;
   } catch (error) {
     console.error("Error fetching videos:", error);
-    return [];
+    if ((error as any)?.response?.data?.error === "invalid_grant") {
+      console.error("Invalid token. Deleting token...");
+      deleteToken(res);
+      throw new Error("Invalid token. Please re-authenticate.");
+    }
+    throw new Error("Error fetching videos: " + (error as Error).message);
   }
 }
 
@@ -150,15 +209,7 @@ async function doDeleteJudolComment(
 ) {
   try {
     const auth = await handleGoogleAuth(req, res);
-    // const fetchChannelId = getChannelId(req);
-    // const channelId =
-    //   typeof fetchChannelId === "object" &&
-    //   !!fetchChannelId &&
-    //   "channelId" in fetchChannelId
-    //     ? (fetchChannelId as { channelId: string }).channelId
-    //     : fetchChannelId;
-    // const contentList = await youtubeContentList(auth, channelId as string);
-    const contentList = await youtubeContentList(auth);
+    const contentList = await youtubeContentList(auth, res);
 
     for (const video of contentList) {
       const title = video?.snippet?.title;
