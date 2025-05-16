@@ -97,7 +97,7 @@ function getJudolComment(
 
     // Fuzzy match using fuzzball
     const similarity = fuzz.ratio(normalizedText, normalizedWord);
-    const checkingSimilarityLogs = `[🔎] Checking "${normalizedText}" vs "${normalizedWord}" → ${similarity}`;
+    const checkingSimilarityLogs = `[🔎] Checking "${normalizedText}" vs "${normalizedWord}" → ${similarity}%`;
     console.log(checkingSimilarityLogs);
     logCallback(checkingSimilarityLogs); // Send log in real-time
     if (similarity >= 75) {
@@ -193,7 +193,10 @@ async function youtubeContentList(auth: any, res: any) {
     return allVideos;
   } catch (error) {
     console.error("Error fetching videos:", error);
-    if ((error as any)?.response?.data?.error === "invalid_grant") {
+    if (
+      (error as any)?.response?.data?.error === "invalid_grant" ||
+      (error as any)?.response?.data?.error?.includes("No refresh token is set")
+    ) {
       console.error("Invalid token. Deleting token...");
       deleteToken(res);
       throw new Error("Invalid token. Please re-authenticate.");

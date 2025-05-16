@@ -6,12 +6,12 @@
   --button-primary-hover: #383838;
   --button-secondary-hover: #f2f2f2;
 
-  display: grid;
+  display: flex;
   /* grid-template-rows: 20px 1fr 20px; */
   align-items: center;
   justify-items: center;
   /* min-height: 100svh; */
-  /* padding: 80px; */
+  /* padding: 32px; */
   gap: 64px;
   font-family: var(--font-geist-sans);
 }
@@ -35,6 +35,8 @@
   width: 100%;
   padding-left: 2dvw;
   padding-right: 2dvw;
+  padding-top: 2dvh;
+  height: calc(100svh - 88px);
 }
 
 .main ol {

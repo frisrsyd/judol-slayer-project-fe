@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { doDeleteJudolComment } from "@/utils/comments";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function handler(
   req: NextApiRequest,
@@ -27,7 +27,10 @@ export default async function handler(
       res.flushHeaders; // Ensure each log is sent immediately
     });
     res.write(
-      `data: ${JSON.stringify({ log: "✅✅✅ Process completed." })}\n\n`
+      `data: ${JSON.stringify({
+        log: "✅✅✅ Process completed.",
+        message: "Judol slayer has been completed.",
+      })}\n\n`
     );
     res.flushHeaders; // Ensure the completion message is sent immediately
     res.end();
