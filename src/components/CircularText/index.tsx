@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, useAnimation } from "framer-motion";
 
-import "./index.css";
+import styles from "@/styles/CircularText.module.css";
 import { Typography } from "@mui/material";
 
 const getRotationTransition = (
@@ -104,7 +104,7 @@ const CircularText = ({
   return (
     <motion.div
       initial={{ rotate: 0 }}
-      className={`circular-text ${className}`}
+      className={`${styles["circular-text"]} ${className}`}
       animate={controls}
       onUpdate={(latest) => setCurrentRotation(Number(latest.rotate))}
       onMouseEnter={handleHoverStart}
@@ -118,7 +118,12 @@ const CircularText = ({
         const transform = `rotateZ(${rotation}deg) translate3d(${x}px, ${y}px, 0)`;
 
         return (
-          <Typography component={"span"} sx={sx} key={i} style={{ transform, WebkitTransform: transform }}>
+          <Typography
+            component={"span"}
+            sx={sx}
+            key={i}
+            style={{ transform, WebkitTransform: transform }}
+          >
             {letter}
           </Typography>
         );
