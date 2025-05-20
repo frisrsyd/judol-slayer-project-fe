@@ -5,8 +5,16 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 ## Getting Started
 Requirement:
 - NodeJS
+- GIT
 
-First, run the installation package with nodeJS:
+First, copy this repo to your own device:
+```bash
+git clone https://github.com/frisrsyd/judol-slayer-project-fe
+#then enter to the project folder
+cd judol-slayer-project-fe
+```
+
+then, run the installation package with nodeJS:
 ```bash
 npm install
 #then copy the env
