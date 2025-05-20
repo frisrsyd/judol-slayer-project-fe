@@ -22,7 +22,7 @@ copy example.env .env
 #or
 cp example.env .env
 ```
-and fill the .env with your own environtment variable
+and fill the .env with your own environment variable
 
 then, run the development server:
 
