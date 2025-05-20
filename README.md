@@ -1,8 +1,22 @@
+## !!!For now only the text input to blocked words can be deleted, future update will add automatically detext suspicious comment and adding feature to confirm deletion, and ability to review comment before doing deletion
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
 
 ## Getting Started
+Requirement:
+- NodeJS
 
-First, run the development server:
+First, run the installation package with nodeJS:
+```bash
+npm install
+#then copy the env
+copy example.env .env
+#or
+cp example.env .env
+```
+and fill the .env with your own environtment variable
+
+then, run the development server:
 
 ```bash
 npm run dev
@@ -16,11 +30,15 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+or build the app first for faster mode
+run
+```bash
+npm run build
+#and then run:
+npm run start
+```
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
-
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
 
 This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
