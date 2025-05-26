@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { doDeleteJudolComment } from "@/utils/comments";
+import { doDetectJudolComment } from "@/utils/comments";
 import { NextResponse } from "next/server";
 
 // export const runtime = 'nodejs';
@@ -28,11 +28,22 @@ export default async function handler(
   }, 30000);
 
   try {
-    await doDeleteJudolComment(req, res, (log: string) => {
-      // res.write(`data: ${JSON.stringify({ log })}\n\n`);
-      // res.flushHeaders; // Ensure each log is sent immediately
-      writer.write(`data: ${JSON.stringify({ log })}\n\n`);
-    });
+    await doDetectJudolComment(
+      req,
+      res,
+      (log: string) => {
+        writer.write(`data: ${JSON.stringify({ log })}\n\n`);
+        res.flushHeaders?.(); // Ensure each log is sent immediately
+      },
+      (comment) => {
+        writer.write(
+          `data: ${JSON.stringify({ detectedComment: comment })}\n\n`
+        );
+        res.flushHeaders?.(); // Ensure each detected comment is sent immediately
+        // res.write(`data: ${JSON.stringify({ log })}\n\n`);
+        // res.flushHeaders; // Ensure each log is sent immediately
+      }
+    );
     // res.write(
     //   `data: ${JSON.stringify({ log: "✅✅✅ Process completed." })}\n\n`
     // );
@@ -60,15 +71,17 @@ export default async function handler(
     writer.close();
   }
 
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Cache-Control', 'no-cache, no-transform');
-  stream.readable.pipeTo(new WritableStream({
-    write(chunk) {
-      res.write(chunk);
-    },
-    close() {
-      res.end();
-    }
-  }));
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  stream.readable.pipeTo(
+    new WritableStream({
+      write(chunk) {
+        res.write(chunk);
+      },
+      close() {
+        res.end();
+      },
+    })
+  );
 }

@@ -6,6 +6,7 @@ import {
   Autocomplete,
   Box,
   Button,
+  Checkbox,
   IconButton,
   LinearProgress,
   TextField,
@@ -18,6 +19,7 @@ import {
   GitHub,
   Google,
   Logout,
+  RemoveRedEye,
   Web,
 } from "@mui/icons-material";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -52,6 +54,9 @@ export default function Home() {
     React.useState<boolean>(false);
   const [isLogout, setIsLogout] = React.useState<boolean>(false);
   const [logList, setLogList] = React.useState<string[]>([]);
+  const [detectedCommentList, setDetectedCommentList] = React.useState<
+    { commentId: string; commentText: string; mustBeDelete: boolean }[]
+  >([]);
   const [loginLoading, setLoginLoading] = React.useState<boolean>(false);
   const [loading, setLoading] = React.useState<boolean>(false);
   const [alert, setAlert] = React.useState<AlertProps>({
@@ -357,19 +362,30 @@ export default function Home() {
       tokenIsValid();
       setIsLogout(false);
       setLogList([]);
+      setDetectedCommentList([]);
       setLoading(false);
     }
   }, [isLogout]);
 
-  const handleDeleteJudolComments = async () => {
-    setLogList([]);
+  const handleDetectJudolComments = async () => {
+    // setLogList([]);
+    setDetectedCommentList([]);
     setLoading(true);
     // const eventSource = new EventSource("/api/do-delete-judol-comments-new");
-    const eventSource = new EventSource("/api/do-delete-judol-comments");
+    const eventSource = new EventSource("/api/do-detect-judol-comments");
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      setLogList((prevLogs) => [...prevLogs, data.log]);
+      if (data.log) {
+        setLogList((prevLogs) => [...prevLogs, data.log]);
+      }
+      if (data.detectedComment) {
+        setDetectedCommentList((prevComments) => [
+          ...prevComments,
+          data.detectedComment,
+        ]);
+      }
+      console.log("Received data:", data);
       if (data.message) {
         setAlert({
           isopen: true,
@@ -477,6 +493,100 @@ export default function Home() {
     }
   };
 
+  const handleCommentCheckboxChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const commentId = event.target.value;
+    const mustBeDelete = event.target.checked;
+
+    setDetectedCommentList((prevComments) =>
+      prevComments.map((comment) =>
+        comment.commentId === commentId
+          ? { ...comment, mustBeDelete: mustBeDelete }
+          : comment
+      )
+    );
+  };
+
+  React.useEffect(() => {
+    console.log("Comments to delete:", detectedCommentList);
+  }, [detectedCommentList]);
+
+  // Add this inside your Home component in index.tsx
+
+  const handleDeleteJudolComments = async () => {
+    // setLogList([]);
+    setLoading(true);
+
+    // Only send IDs that are checked for deletion
+    const commentIdsToDelete = detectedCommentList
+      .filter((c) => c.mustBeDelete)
+      .map((c) => c.commentId);
+
+    if (commentIdsToDelete.length === 0) {
+      setAlert({
+        isopen: true,
+        type: "warning",
+        message: "No comments selected for deletion.",
+      });
+      setLoading(false);
+      return;
+    }
+
+    // Use fetch + ReadableStream for SSE with POST
+    const response = await fetch("/api/do-delete-judol-comments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ commentIds: commentIdsToDelete }),
+    });
+
+    if (!response.body) {
+      setAlert({
+        isopen: true,
+        type: "error",
+        message: "No response from server.",
+      });
+      setLoading(false);
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // Split by double newlines (SSE event delimiter)
+      const events = buffer.split("\n\n");
+      buffer = events.pop() || "";
+
+      for (const event of events) {
+        if (!event.trim()) continue;
+        const dataLine = event
+          .split("\n")
+          .find((line) => line.startsWith("data:"));
+        if (!dataLine) continue;
+        const data = JSON.parse(dataLine.replace("data: ", ""));
+        if (data.log) setLogList((prev) => [...prev, data.log]);
+        if (data.message) {
+          setAlert({
+            isopen: true,
+            type: "success",
+            message: data.message,
+          });
+          // setLoading(false);
+          // Optionally clear detectedCommentList here
+          // handleDetectJudolComments(); // Refresh detected comments after deletion
+          setDetectedCommentList([]);
+        }
+      }
+    }
+    // setLoading(false);
+  };
+
   return (
     <>
       <Head>
@@ -518,7 +628,7 @@ export default function Home() {
                 position: "fixed", // Added position sticky
                 top: 8, // Optional: to specify the sticky position
                 zIndex: 10000, // Optional: to ensure it stays above other elements
-                maxWidth: "50%",
+                maxWidth: "30%",
                 right: 8,
               }}
               variant="filled"
@@ -629,7 +739,7 @@ export default function Home() {
                 <TextField
                   {...params}
                   label="Blocked Words"
-                  placeholder="Enter Blocked Words"
+                  placeholder="Hit Enter to submit/save blocked words"
                   sx={{
                     backgroundColor: "white",
                     borderRadius: "4px",
@@ -692,63 +802,156 @@ export default function Home() {
                 ) : null}
                 <Button
                   variant="contained"
-                  color="success"
-                  startIcon={<KatanaIcon width={20} height={20} />}
+                  color={detectedCommentList.length > 0 ? "warning" : "success"}
+                  startIcon={
+                    detectedCommentList.length > 0 ? (
+                      <KatanaIcon width={20} height={20} />
+                    ) : (
+                      <RemoveRedEye width={20} height={20} />
+                    )
+                  }
                   disabled={loading}
                   onClick={() => {
-                    handleDeleteJudolComments();
+                    detectedCommentList.length > 0
+                      ? handleDeleteJudolComments()
+                      : handleDetectJudolComments();
                   }}
                   fullWidth
                 >
-                  LETS SLAY JUDOL COMMENTS
+                  {detectedCommentList.length > 0
+                    ? "Confirm Delete Judol Comments"
+                    : "Detect Judol Comments"}
                 </Button>
               </Box>
             ) : null}
             {!!logList.length ? (
               <Box
                 display={"flex"}
-                flexDirection="column"
+                justifyContent={"space-between"}
+                // alignItems={"center"}
                 gap={1.5}
-                justifyContent={"left"}
-                alignItems={"left"}
-                sx={{
-                  maxHeight: window.innerHeight - 410,
-                  overflowY: "auto",
-                  width: "100%",
-                  padding: "8px",
-                  backgroundColor: "rgba(255, 255, 255, 0.8)",
-                  borderRadius: "4px",
-                  boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                  // style the scrollbar
-                  "&::-webkit-scrollbar": {
-                    width: "8px",
-                  },
-                  "&::-webkit-scrollbar-track": {
-                    background: "rgba(0, 0, 0, 0.1)",
-                  },
-                  "&::-webkit-scrollbar-thumb": {
-                    background: "rgba(0, 0, 0, 0.3)",
-                    borderRadius: "4px",
-                  },
-                  "&::-webkit-scrollbar-thumb:hover": {
-                    background: "rgba(0, 0, 0, 0.5)",
-                  },
-                }}
+                flexDirection={"row"}
               >
-                {logList.map((log, index) => (
-                  <Typography
-                    key={index}
-                    variant="subtitle2"
-                    sx={{
-                      backgroundColor: "white",
+                <Box
+                  display={"flex"}
+                  flexDirection="column"
+                  gap={1.5}
+                  justifyContent={"left"}
+                  alignItems={"left"}
+                  sx={{
+                    maxHeight: window.innerHeight - 410,
+                    overflowY: "auto",
+                    width: "100%",
+                    padding: "8px",
+                    backgroundColor: "rgba(255, 255, 255, 0.8)",
+                    borderRadius: "4px",
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                    // style the scrollbar
+                    "&::-webkit-scrollbar": {
+                      width: "8px",
+                    },
+                    "&::-webkit-scrollbar-track": {
+                      background: "rgba(0, 0, 0, 0.1)",
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                      background: "rgba(0, 0, 0, 0.3)",
                       borderRadius: "4px",
-                      padding: "8px",
-                      width: "100%",
+                    },
+                    "&::-webkit-scrollbar-thumb:hover": {
+                      background: "rgba(0, 0, 0, 0.5)",
+                    },
+                  }}
+                >
+                  {logList.map((log, index) => (
+                    <Typography
+                      key={index}
+                      variant="subtitle2"
+                      sx={{
+                        backgroundColor: "white",
+                        borderRadius: "4px",
+                        padding: "8px",
+                        width: "100%",
+                      }}
+                    >
+                      {log}
+                    </Typography>
+                  ))}
+                </Box>
+                <Box
+                  display={"flex"}
+                  flexDirection="column"
+                  gap={1.5}
+                  justifyContent={"left"}
+                  alignItems={"left"}
+                  sx={{
+                    maxHeight: window.innerHeight - 410,
+                    overflowY: "auto",
+                    width: "100%",
+                    px: 2,
+                    pb: 2,
+                    backgroundColor: "rgba(255, 255, 255, 0.8)",
+                    borderRadius: "4px",
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                    // style the scrollbar
+                    "&::-webkit-scrollbar": {
+                      width: "8px",
+                    },
+                    "&::-webkit-scrollbar-track": {
+                      background: "rgba(0, 0, 0, 0.1)",
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                      background: "rgba(0, 0, 0, 0.3)",
+                      borderRadius: "4px",
+                    },
+                    "&::-webkit-scrollbar-thumb:hover": {
+                      background: "rgba(0, 0, 0, 0.5)",
+                    },
+                  }}
+                >
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      fontWeight: "bold",
+                      color: "#383838",
+                      position: "sticky",
+                      top: 0,
+                      bgcolor: "rgba(255, 255, 255)",
+                      zIndex: 1,
+                      pt: 2,
                     }}
                   >
-                    {log}
+                    {`Detected Judol Comments (${detectedCommentList.length})`}
                   </Typography>
-                ))}
+                  {detectedCommentList.map((comment, index) => (
+                    <Box
+                      key={index}
+                      display="flex"
+                      flexDirection="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      sx={{ width: "100%" }}
+                    >
+                      <Checkbox
+                        value={comment.commentId}
+                        onChange={(e) => {
+                          handleCommentCheckboxChange(e);
+                        }}
+                        defaultChecked={comment.mustBeDelete}
+                      />
+                      <Typography
+                        variant="subtitle2"
+                        sx={{
+                          backgroundColor: "white",
+                          borderRadius: "4px",
+                          padding: "8px",
+                          width: "100%",
+                        }}
+                      >
+                        {comment.commentText}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
               </Box>
             ) : null}
           </Box>

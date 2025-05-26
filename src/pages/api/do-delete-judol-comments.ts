@@ -7,7 +7,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (req.method !== "GET") {
+  if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
@@ -18,21 +18,21 @@ export default async function handler(
   // Send a keep-alive message every 30 seconds to prevent timeouts
   const keepAliveInterval = setInterval(() => {
     res.write(`data: ${JSON.stringify({ log: "💓 Keep-alive" })}\n\n`);
-    res.flushHeaders; // Ensure the keep-alive message is sent immediately`
+    res.flushHeaders?.();
   }, 30000);
 
   try {
     await doDeleteJudolComment(req, res, (log: string) => {
       res.write(`data: ${JSON.stringify({ log })}\n\n`);
-      res.flushHeaders; // Ensure each log is sent immediately
+      res.flushHeaders?.();
     });
     res.write(
       `data: ${JSON.stringify({
-        log: "✅✅✅ Process completed.",
-        message: "Judol slayer has been completed.",
+        log: "✅✅✅ Deletion completed.",
+        message: "Selected comments have been deleted.",
       })}\n\n`
     );
-    res.flushHeaders; // Ensure the completion message is sent immediately
+    res.flushHeaders?.();
     res.end();
   } catch (error) {
     console.error("Error deleting Judol comments:", error);
@@ -41,7 +41,7 @@ export default async function handler(
         log: `❌ Error: ${(error as Error).message}`,
       })}\n\n`
     );
-    res.flushHeaders; // Ensure the error message is sent immediately
+    res.flushHeaders?.();
     res.end();
   } finally {
     clearInterval(keepAliveInterval);

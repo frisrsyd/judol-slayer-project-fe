@@ -1,13 +1,16 @@
-## !!!For now only the text input to blocked words can be deleted, future update will add automatically detext suspicious comment and adding feature to confirm deletion, and ability to review comment before doing deletion
+## !!!Automatic detect suspicious text, and user have ability to review and decide comments to delete
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
 
 ## Getting Started
+
 Requirement:
+
 - NodeJS
 - GIT
 
 First, copy this repo to your own device:
+
 ```bash
 git clone https://github.com/frisrsyd/judol-slayer-project-fe
 #then enter to the project folder
@@ -15,6 +18,7 @@ cd judol-slayer-project-fe
 ```
 
 then, run the installation package with nodeJS:
+
 ```bash
 npm install
 #then copy the env
@@ -22,6 +26,7 @@ copy example.env .env
 #or
 cp example.env .env
 ```
+
 and fill the .env with your own environment variable
 
 then, run the development server:
@@ -40,13 +45,14 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 or build the app first for faster mode
 run
+
 ```bash
 npm run build
 #and then run:
 npm run start
 ```
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 

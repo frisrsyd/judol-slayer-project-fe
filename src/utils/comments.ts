@@ -40,12 +40,18 @@ async function fetchComments(
       logs.push(checkLog);
       logCallback(checkLog); // Send log in real-time
 
-      if (getJudolComment(commentText as string, req, logCallback)) {
+      if (
+        commentId &&
+        typeof commentId === "string" &&
+        commentText &&
+        typeof commentText === "string" &&
+        getJudolComment(commentText, req, logCallback)
+      ) {
         const spamLog = `🚨 Spam detected: "${commentText}"`;
         console.log(spamLog);
         logs.push(spamLog);
         logCallback(spamLog); // Send log in real-time
-        spamComments.push(commentId);
+        spamComments.push({ commentId, commentText });
       }
     });
 
@@ -69,19 +75,16 @@ function getJudolComment(
   //   return true;
   // }
 
+  const basicNormalizedText = text.normalize("NFKD");
+  if (text !== basicNormalizedText) {
+    return true;
+  }
+
   const fetchBlockedWords = getBlockedWords(req);
   const blockedWords: string[] =
     typeof fetchBlockedWords === "object" && !!fetchBlockedWords
       ? (fetchBlockedWords as { blockedWords: string[] }).blockedWords
       : [];
-
-  if (!Array.isArray(blockedWords) || blockedWords.length === 0) {
-    const basicNormalizedText = text.normalize("NFKD");
-    if (text !== basicNormalizedText) {
-      return true;
-    }
-    return false;
-  }
 
   for (const word of blockedWords) {
     const normalizedWord = normalizeText(word);
@@ -148,9 +151,12 @@ async function deleteComments(
         moderationStatus: "rejected",
       });
       totalDeletedComments += commentIdsChunk.length;
-      const progressLog = `Progress: ${totalDeletedComments}/${totalCommentsToBeDeleted} (${commentIds.length} remaining)\n Deleted the following comment IDs: ${commentIdsChunk}`;
+      const progressLog = `Progress: ${totalDeletedComments}/${totalCommentsToBeDeleted} (${commentIds.length} remaining)\n`;
+      const deletedIdsLog = `Deleted the following comment IDs: ${commentIdsChunk}`;
       console.log(progressLog);
       logCallback(progressLog); // Send progress log in real-time
+      console.log(deletedIdsLog);
+      logCallback(deletedIdsLog); // Send deleted IDs log in real-time
     } catch (error) {
       const errorLog = `Failed to delete these comment IDs: ${commentIdsChunk}: ${
         (error as Error).message
@@ -205,10 +211,17 @@ async function youtubeContentList(auth: any, res: any) {
   }
 }
 
-async function doDeleteJudolComment(
+async function doDetectJudolComment(
   req: any,
   res: any,
-  logCallback: (log: string) => void
+  logCallback: (log: string) => void,
+  commentCallback: (comment: {
+    commentId: string;
+    commentText: string;
+    videoId: string;
+    videoTitle: string;
+    mustBeDelete: boolean;
+  }) => void
 ) {
   try {
     const auth = await handleGoogleAuth(req, res);
@@ -230,11 +243,20 @@ async function doDeleteJudolComment(
       );
 
       if (spamComments.length > 0) {
-        const spamLog = `🚫 Found ${spamComments.length} spam comments. Deleting...`;
+        const spamLog = `🚫 Found ${spamComments.length} spam comments.`;
         console.log(spamLog);
         logCallback(spamLog); // Send log in real-time
 
-        await deleteComments(auth, spamComments, logCallback);
+        // await deleteComments(auth, spamComments, logCallback);
+        for (const spam of spamComments) {
+          commentCallback({
+            commentId: spam.commentId,
+            commentText: spam.commentText,
+            videoId: videoId ?? "",
+            videoTitle: title ?? "",
+            mustBeDelete: true,
+          });
+        }
 
         const deleteLog = "✅ Spam comments deleted.";
         console.log(deleteLog);
@@ -253,4 +275,29 @@ async function doDeleteJudolComment(
   }
 }
 
-export { doDeleteJudolComment };
+async function doDeleteJudolComment(
+  req: any,
+  res: any,
+  logCallback: (log: string) => void
+) {
+  try {
+    const { commentIds } = req.body;
+    if (!Array.isArray(commentIds) || commentIds.length === 0) {
+      throw new Error("No comment IDs provided for deletion.");
+    }
+
+    const auth = await handleGoogleAuth(req, res);
+
+    await deleteComments(auth, [...commentIds], logCallback);
+
+    logCallback(`✅ Selected comments deleted successfully.`);
+    return { success: true };
+  } catch (error) {
+    const errorLog = `Error deleting comments: ${(error as Error).message}`;
+    console.error(errorLog);
+    logCallback(errorLog);
+    throw error;
+  }
+}
+
+export { doDetectJudolComment, doDeleteJudolComment };
