@@ -134,6 +134,7 @@ function getJudolComment(
 
 // Delete comments
 async function deleteComments(
+  res: any,
   auth: any,
   commentIds: any,
   logCallback: (log: string) => void
@@ -158,6 +159,16 @@ async function deleteComments(
       console.log(deletedIdsLog);
       logCallback(deletedIdsLog); // Send deleted IDs log in real-time
     } catch (error) {
+      if (
+        (error as any)?.response?.data?.error === "invalid_grant" ||
+        (error as any)?.response?.data?.error?.includes(
+          "No refresh token is set"
+        )
+      ) {
+        console.error("Invalid token. Deleting token...");
+        deleteToken(res);
+        throw new Error("Invalid token. Please re-authenticate.");
+      }
       const errorLog = `Failed to delete these comment IDs: ${commentIdsChunk}: ${
         (error as Error).message
       }`;
@@ -288,7 +299,7 @@ async function doDeleteJudolComment(
 
     const auth = await handleGoogleAuth(req, res);
 
-    await deleteComments(auth, [...commentIds], logCallback);
+    await deleteComments(res, auth, [...commentIds], logCallback);
 
     logCallback(`✅ Selected comments deleted successfully.`);
     return { success: true };
