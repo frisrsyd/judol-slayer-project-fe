@@ -671,7 +671,7 @@ export default function Home() {
               }}
             >
               <CircularText
-                text="LOADING*PLEASE*WAIT"
+                text="LOADING*PLEASE*WAIT*"
                 onHover="goBonkers"
                 spinDuration={20}
                 className="text-red-500"
