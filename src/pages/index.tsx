@@ -70,6 +70,8 @@ export default function Home() {
     setAlert({ ...alert, isopen: false });
   };
 
+  const env = process.env.NODE_ENV;
+
   React.useEffect(() => {
     // If this window was opened as a popup and has a code param, send it to the opener
     if (window.opener && window.location.search.includes("code=")) {
@@ -130,7 +132,7 @@ export default function Home() {
         },
       });
       const data = await response.json();
-      console.log("Response from server:", data);
+      env !== "production" && console.log("Response from server:", data);
       if (data.isValid) {
         setIsTokenAvailable(true);
       } else {
@@ -142,7 +144,7 @@ export default function Home() {
         setIsRefreshTokenAvailable(false);
       }
     } catch (error) {
-      console.error("Error getting token:", error);
+      env !== "production" && console.error("Error getting token:", error);
     }
   };
 
@@ -155,11 +157,12 @@ export default function Home() {
         },
       });
       const data = await response.json();
-      console.log("Response from server:", data);
-      console.log("Blocked words:", data.blockedWords);
+      env !== "production" && console.log("Response from server:", data);
+      env !== "production" && console.log("Blocked words:", data.blockedWords);
       setBlockedWords(data.blockedWords);
     } catch (error) {
-      console.error("Error getting blockedWords:", error);
+      env !== "production" &&
+        console.error("Error getting blockedWords:", error);
     }
   };
 
@@ -178,11 +181,11 @@ export default function Home() {
   //       },
   //     });
   //     const data = await response.json();
-  //     // console.log("Response from BE:", data);
+  //     // env !== "production" && console.log("Response from BE:", data);
 
   //     if (data?.url) {
   //       // Step 2: Redirect the user to the OAuth URL
-  //       console.log("OAuth URL:", data.url);
+  //       env !== "production" && console.log("OAuth URL:", data.url);
   //       const popup = window.open(data.url, "_blank", "width=600,height=600");
 
   //       // Step 3: Listen for the authorization code
@@ -190,7 +193,7 @@ export default function Home() {
   //         try {
   //           if (popup?.closed) {
   //             clearInterval(interval);
-  //             console.error(
+  //             env !== "production" && console.error(
   //               "Popup closed before completing the login process."
   //             );
   //             // setLoginLoading(false);
@@ -214,24 +217,24 @@ export default function Home() {
   //             });
 
   //             const tokenData = await tokenResponse.json();
-  //             console.log("Token response from server:", tokenData);
+  //             env !== "production" && console.log("Token response from server:", tokenData);
   //             tokenIsValid();
   //             // setLoginLoading(false);
   //           }
   //         } catch (error) {
   //           setLoginLoading(false);
-  //           console.error("Error during login process:", error);
+  //           env !== "production" && console.error("Error during login process:", error);
   //           // Ignore cross-origin errors until the popup redirects to the same origin
   //         }
   //       }, 500);
   //     } else {
-  //       console.log(data.message);
+  //       env !== "production" && console.log(data.message);
   //       tokenIsValid();
   //       // setLoginLoading(false);
   //     }
   //   } catch (error) {
   //     setLoginLoading(false);
-  //     console.error("Error logging in with Google:", error);
+  //     env !== "production" && console.error("Error logging in with Google:", error);
   //   }
   // };
 
@@ -253,7 +256,10 @@ export default function Home() {
           const { code } = event.data || {};
           if (popup?.closed && !!code === false) {
             window.removeEventListener("message", handleMessage);
-            console.error("Popup closed before completing the login process.");
+            env !== "production" &&
+              console.error(
+                "Popup closed before completing the login process."
+              );
             setLoginLoading(false);
             return;
           }
@@ -268,7 +274,8 @@ export default function Home() {
               body: JSON.stringify({ code }),
             });
             const tokenData = await tokenResponse.json();
-            console.log("Token response from server:", tokenData);
+            env !== "production" &&
+              console.log("Token response from server:", tokenData);
             setAlert({
               isopen: true,
               type: "success",
@@ -282,7 +289,7 @@ export default function Home() {
         };
         window.addEventListener("message", handleMessage);
       } else {
-        console.log(data.message);
+        env !== "production" && console.log(data.message);
         tokenIsValid();
         setLoginLoading(false);
         setAlert({
@@ -293,7 +300,8 @@ export default function Home() {
       }
     } catch (error) {
       setLoginLoading(false);
-      console.error("Error logging in with Google:", error);
+      env !== "production" &&
+        console.error("Error logging in with Google:", error);
       setAlert({
         isopen: true,
         type: "error",
@@ -326,7 +334,7 @@ export default function Home() {
               throw new Error("Network response was not ok");
             }
           });
-          console.log("Logout successful");
+          env !== "production" && console.log("Logout successful");
           setIsLogout(true);
           setLoginLoading(false);
           // window.open("https://myaccount.google.com/permissions", "_blank");
@@ -338,7 +346,7 @@ export default function Home() {
         })
         .catch((error) => {
           setLoginLoading(false);
-          console.error("Error during logout:", error);
+          env !== "production" && console.error("Error during logout:", error);
           setAlert({
             isopen: true,
             type: "error",
@@ -347,7 +355,7 @@ export default function Home() {
         });
     } catch (error) {
       setLoginLoading(false);
-      console.error("Error logging out:", error);
+      env !== "production" && console.error("Error logging out:", error);
       setAlert({
         isopen: true,
         type: "error",
@@ -357,7 +365,7 @@ export default function Home() {
   };
 
   React.useEffect(() => {
-    console.log("isLogout:", isLogout);
+    env !== "production" && console.log("isLogout:", isLogout);
     if (isLogout) {
       tokenIsValid();
       setIsLogout(false);
@@ -385,7 +393,7 @@ export default function Home() {
           data.detectedComment,
         ]);
       }
-      console.log("Received data:", data);
+      env !== "production" && console.log("Received data:", data);
       if (data.message) {
         setAlert({
           isopen: true,
@@ -396,7 +404,7 @@ export default function Home() {
     };
 
     eventSource.onerror = (error) => {
-      // console.error("Error with SSE:", error);
+      // env !== "production" && console.error("Error with SSE:", error);
       // setLogList((prevLogs) => [...prevLogs, "❌ An error occurred."]);
       // setAlert({
       //   isopen: true,
@@ -407,12 +415,12 @@ export default function Home() {
     };
 
     eventSource.onopen = () => {
-      console.log("SSE connection opened.");
+      env !== "production" && console.log("SSE connection opened.");
     };
   };
 
   const onBlockedWordsChange = async (updatedWords: string[]) => {
-    console.log("Blocked words changed:", updatedWords);
+    env !== "production" && console.log("Blocked words changed:", updatedWords);
     setBlockedWords(updatedWords);
 
     try {
@@ -425,7 +433,7 @@ export default function Home() {
       });
 
       const data = await response.json();
-      console.log("Response from server:", data);
+      env !== "production" && console.log("Response from server:", data);
       if (response.ok) {
         setAlert({
           isopen: true,
@@ -441,7 +449,8 @@ export default function Home() {
         });
       }
     } catch (error) {
-      console.error("Error saving blocked words:", error);
+      env !== "production" &&
+        console.error("Error saving blocked words:", error);
       setAlert({
         isopen: true,
         type: "error",
@@ -468,7 +477,7 @@ export default function Home() {
         body: JSON.stringify({ logList }),
       });
       const data = await response.blob();
-      console.log("Response from server:", data);
+      env !== "production" && console.log("Response from server:", data);
       const url = window.URL.createObjectURL(data);
       const a = document.createElement("a");
       const filename = `judol-slayer-log-${new Date().toISOString()}.txt`;
@@ -484,7 +493,8 @@ export default function Home() {
         message: "Log file downloaded successfully!",
       });
     } catch (error) {
-      console.error("Error downloading log file:", error);
+      env !== "production" &&
+        console.error("Error downloading log file:", error);
       setAlert({
         isopen: true,
         type: "error",
@@ -509,7 +519,8 @@ export default function Home() {
   };
 
   React.useEffect(() => {
-    console.log("Comments to delete:", detectedCommentList);
+    env !== "production" &&
+      console.log("Comments to delete:", detectedCommentList);
   }, [detectedCommentList]);
 
   // Add this inside your Home component in index.tsx
