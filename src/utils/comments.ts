@@ -212,12 +212,13 @@ async function youtubeContentList(auth: any, res: any) {
     console.error("Error fetching videos:", error);
     if (
       (error as any)?.response?.data?.error === "invalid_grant" ||
-      (error as any)?.response?.data?.error?.includes("No refresh token is set")
+      (error as any)?.response?.data?.error?.includes("No refresh token is set.")
     ) {
       console.error("Invalid token. Deleting token...");
       deleteToken(res);
       throw new Error("Invalid token. Please re-authenticate.");
     }
+    deleteToken(res);
     throw new Error("Error fetching videos: " + (error as Error).message);
   }
 }
