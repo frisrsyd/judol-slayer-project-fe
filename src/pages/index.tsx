@@ -368,15 +368,10 @@ export default function Home() {
     env !== "production" && console.log("isLogout:", isLogout);
     if (isLogout) {
       tokenIsValid();
+      setIsLogout(false);
       setLogList([]);
       setDetectedCommentList([]);
       setLoading(false);
-      setIsLogout(false);
-      setAlert({
-        isopen: true,
-        type: "info",
-        message: "You have been logged out successfully.",
-      });
     }
   }, [isLogout]);
 
