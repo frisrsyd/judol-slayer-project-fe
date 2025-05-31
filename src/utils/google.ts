@@ -1,12 +1,12 @@
 import { google } from "googleapis";
 import { getToken, setToken } from "./token";
 
-const redirect_uris = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URIS;
+// const redirect_uris = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URIS;
 const SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"];
 
 async function handleGoogleAuth(req: any, res: any) {
   const credentialsWeb = process.env.NEXT_PUBLIC_GOOGLE_CREDENTIALS;
-  const { client_secret, client_id } = JSON.parse(credentialsWeb || "{}").web;
+  const { client_secret, client_id, redirect_uris } = JSON.parse(credentialsWeb || "{}").web;
 
   const oAuth2Client = new google.auth.OAuth2(
     client_id,
