@@ -717,9 +717,9 @@ export default function Home() {
             />
             <KatanaIcon width={34} height={34} color="#383838" />
           </Box>
-          {isRefreshTokenAvailable && !isTokenAvailable ? (
+          {!isTokenAvailable ? (
             <Typography>
-              Please{" "}
+              You can{" "}
               <Typography
                 component="a"
                 color="primary"
@@ -733,17 +733,25 @@ export default function Home() {
             </Typography>
           ) : null}
 
-          <Button
-            variant="contained"
-            color="error"
-            startIcon={!isTokenAvailable ? <Google /> : <Logout />}
-            onClick={() => {
-              !isTokenAvailable ? handleLoginOauthGoogle() : handleLogout();
-            }}
-            disabled={loginLoading || loading}
+          <Box
+            display={"flex"}
+            justifyContent={!isTokenAvailable ? "space-between" : "end"}
+            alignItems={"center"}
+            flexDirection={"row"}
+            gap={2}
           >
-            {!isTokenAvailable ? "Login With Google" : "Log Out"}
-          </Button>
+            <Button
+              variant="contained"
+              color="error"
+              startIcon={!isTokenAvailable ? <Google /> : <Logout />}
+              onClick={() => {
+                !isTokenAvailable ? handleLoginOauthGoogle() : handleLogout();
+              }}
+              disabled={loginLoading || loading}
+            >
+              {!isTokenAvailable ? "Login With Google" : "Log Out"}
+            </Button>
+          </Box>
           <Box display={"flex"} flexDirection="column" gap={1.5}>
             <Autocomplete
               fullWidth
@@ -800,6 +808,7 @@ export default function Home() {
                 display={"flex"}
                 justifyContent={"space-between"}
                 alignItems={"center"}
+                flexDirection={{ xs: "column", sm: "row" }}
                 gap={1.5}
               >
                 {!!logList.length ? (
@@ -846,7 +855,8 @@ export default function Home() {
                 justifyContent={"space-between"}
                 // alignItems={"center"}
                 gap={1.5}
-                flexDirection={"row"}
+                flexDirection={{ xs: "column", sm: "row" }}
+                sx={{ mb: 15 }}
               >
                 <Box
                   display={"flex"}
@@ -855,7 +865,7 @@ export default function Home() {
                   justifyContent={"left"}
                   alignItems={"left"}
                   sx={{
-                    maxHeight: window.innerHeight - 410,
+                    maxHeight: window.innerHeight * 0.35,
                     overflowY: "auto",
                     width: "100%",
                     padding: "8px",
@@ -973,19 +983,49 @@ export default function Home() {
           </Box>
         </main>
         <footer className={styles.footer}>
-          <Typography sx={{ color: "white" }}>
-            &copy; {new Date().getFullYear()} Judol Slayer by
-          </Typography>
-          <Typography
-            component="a"
-            color="info"
-            href="https://frisrsyd.github.io/Portfolio/"
-            target="_blank"
-            sx={{ display: "inline" }}
+          <Box
+            display={"flex"}
+            justifyContent={"center"}
+            alignItems={"center"}
+            flexDirection={"row"}
+            width={"100%"}
+            position={{xs: "relative", md: "absolute"}}
+            sx={{
+              textAlign: "center",
+            }}
           >
-            <Web />
-            frisrsyd
-          </Typography>
+            <Typography sx={{ color: "white" }}>
+              &copy; {new Date().getFullYear()} Judol Slayer by
+            </Typography>
+            <Typography
+              component="a"
+              color="info"
+              href="https://frisrsyd.github.io/Portfolio/"
+              target="_blank"
+              sx={{ display: "inline" }}
+            >
+              <Web />
+              frisrsyd
+            </Typography>
+          </Box>
+          <Box
+            display={"flex"}
+            justifyContent={{ xs: "center", sm: "end" }}
+            alignItems={"center"}
+            flexDirection={"row"}
+            width={"100%"}
+            pr={{xs: 0, sm: 2}}
+          >
+            <a href="https://ko-fi.com/frisrsyd">
+              {" "}
+              <Image
+                src="/ko-fi-banner.png"
+                alt="frisrsyd"
+                width={250}
+                height={50}
+              />
+            </a>
+          </Box>
           {/* <a
             href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
             target="_blank"

@@ -209,10 +209,15 @@ async function youtubeContentList(auth: any, res: any) {
     } while (nextPageToken);
     return allVideos;
   } catch (error) {
+    console.error(
+      "if you see 'invalid_grant' or 'No refresh token is set', please login again using login Button above ⬆️⬆️⬆️"
+    );
     console.error("Error fetching videos:", error);
     if (
       (error as any)?.response?.data?.error === "invalid_grant" ||
-      (error as any)?.response?.data?.error?.includes("No refresh token is set.")
+      (error as any)?.response?.data?.error?.includes(
+        "No refresh token is set."
+      )
     ) {
       console.error("Invalid token. Deleting token...");
       deleteToken(res);
