@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import * as React from "react";
 import {
+  ArrowBack,
   Close,
   Download,
   GitHub,
@@ -22,7 +23,6 @@ import {
   Logout,
   RemoveRedEye,
   Web,
-  YouTube,
 } from "@mui/icons-material";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { KatanaIcon } from "../../public/katana";
@@ -128,7 +128,7 @@ export default function Home() {
 
   const tokenIsValid = async () => {
     try {
-      const response = await fetch("/api/token/verify", {
+      const response = await fetch("/api/instagram/token/verify", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -173,78 +173,10 @@ export default function Home() {
     getBlockedWords();
   }, []);
 
-  // const handleLoginOauthGoogle = async () => {
-  //   try {
-  //     setLoginLoading(true);
-  //     // Step 1: Get the Google OAuth URL
-  //     const response = await fetch("/api/google-oauth", {
-  //       method: "GET",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //     });
-  //     const data = await response.json();
-  //     // env !== "production" && console.log("Response from BE:", data);
-
-  //     if (data?.url) {
-  //       // Step 2: Redirect the user to the OAuth URL
-  //       env !== "production" && console.log("OAuth URL:", data.url);
-  //       const popup = window.open(data.url, "_blank", "width=600,height=600");
-
-  //       // Step 3: Listen for the authorization code
-  //       const interval = setInterval(async () => {
-  //         try {
-  //           if (popup?.closed) {
-  //             clearInterval(interval);
-  //             env !== "production" && console.error(
-  //               "Popup closed before completing the login process."
-  //             );
-  //             // setLoginLoading(false);
-  //             return;
-  //           }
-
-  //           const urlParams = new URLSearchParams(popup?.location.search);
-  //           const code = urlParams.get("code");
-
-  //           if (code) {
-  //             clearInterval(interval);
-  //             popup?.close();
-
-  //             // Step 4: Send the authorization code to the API
-  //             const tokenResponse = await fetch("/api/google-oauth", {
-  //               method: "POST",
-  //               headers: {
-  //                 "Content-Type": "application/json",
-  //               },
-  //               body: JSON.stringify({ code }),
-  //             });
-
-  //             const tokenData = await tokenResponse.json();
-  //             env !== "production" && console.log("Token response from server:", tokenData);
-  //             tokenIsValid();
-  //             // setLoginLoading(false);
-  //           }
-  //         } catch (error) {
-  //           setLoginLoading(false);
-  //           env !== "production" && console.error("Error during login process:", error);
-  //           // Ignore cross-origin errors until the popup redirects to the same origin
-  //         }
-  //       }, 500);
-  //     } else {
-  //       env !== "production" && console.log(data.message);
-  //       tokenIsValid();
-  //       // setLoginLoading(false);
-  //     }
-  //   } catch (error) {
-  //     setLoginLoading(false);
-  //     env !== "production" && console.error("Error logging in with Google:", error);
-  //   }
-  // };
-
-  const handleLoginOauthGoogle = async () => {
+  const handleLoginOauthInstagram = async () => {
     try {
       setLoginLoading(true);
-      const response = await fetch("/api/google-oauth", {
+      const response = await fetch("/api/instagram-oauth", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -255,8 +187,9 @@ export default function Home() {
 
         // Listen for the code from the popup
         const handleMessage = async (event: MessageEvent) => {
-          if (event.origin !== window.location.origin) return;
-          const { code } = event.data || {};
+          // if (event.origin !== window.location.origin) return;
+            const { code } = event.data || {};
+          env !== "production" && console.log("Received code:", code);
           if (popup?.closed && !!code === false) {
             window.removeEventListener("message", handleMessage);
             env !== "production" &&
@@ -271,7 +204,7 @@ export default function Home() {
             popup?.close();
 
             // Exchange code for tokens
-            const tokenResponse = await fetch("/api/google-oauth", {
+            const tokenResponse = await fetch("/api/insagram-oauth", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ code }),
@@ -304,7 +237,7 @@ export default function Home() {
     } catch (error) {
       setLoginLoading(false);
       env !== "production" &&
-        console.error("Error logging in with Google:", error);
+        console.error("Error logging in with Instagram:", error);
       setAlert({
         isopen: true,
         type: "error",
@@ -317,13 +250,13 @@ export default function Home() {
     try {
       setLoginLoading(true);
       Promise.all([
-        fetch("/api/token/delete", {
+        fetch("/api/instagram/token/delete", {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
           },
         }),
-        fetch("/api/google-oauth-revoke", {
+        fetch("/api/insagram-oauth-revoke", {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
@@ -609,7 +542,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Judol Slayer</title>
+        <title>Judol Slayer | Instagram</title>
         <meta
           name="description"
           content="Judol Slayer UI Project improvement"
@@ -694,6 +627,50 @@ export default function Home() {
           >
             Judol Slayer Project
           </Typography> */}
+
+          <Box
+            display={"flex"}
+            justifyContent={"left"}
+            alignItems={"center"}
+            flexDirection={"column"}
+            position={"absolute"}
+          >
+            <Link
+              href="/"
+              style={{
+                textDecoration: "underline",
+                color: "#383838",
+                fontSize: "24px",
+                fontWeight: "bold",
+                textAlign: "left",
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                borderRadius: 50,
+                padding: "8px 16px",
+                transition: "color 0.2s, background 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.color = "#f5f5f5";
+                (e.currentTarget as HTMLElement).style.background = "#383838";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.color = "#383838";
+                (e.currentTarget as HTMLElement).style.background =
+                  "transparent";
+              }}
+            >
+              <ArrowBack
+                sx={{
+                  ":hover": { bgcolor: "#383838", color: "#f5f5f5" },
+                  borderRadius: 5,
+                }}
+              />
+              Back to Home
+            </Link>
+          </Box>
+
           <Box
             display={"flex"}
             justifyContent={"center"}
@@ -705,7 +682,7 @@ export default function Home() {
           >
             <KatanaIcon width={34} height={34} color="#383838" />
             <BlurText
-              text="Judol Slayer Project"
+              text="Instagram Comment Slayer"
               delay={150}
               animateBy="words"
               direction="top"
@@ -720,28 +697,44 @@ export default function Home() {
             />
             <KatanaIcon width={34} height={34} color="#383838" />
           </Box>
+          {/* {!isTokenAvailable ? (
+            <Typography>
+              You can{" "}
+              <Typography
+                component="a"
+                color="primary"
+                href="https://myaccount.google.com/permissions"
+                target="_blank"
+                sx={{ textDecoration: "underline" }}
+              >
+                Revoke This App Access
+              </Typography>{" "}
+              if you don't want to use this app anymore!
+            </Typography>
+          ) : null} */}
 
           <Box
             display={"flex"}
-            // justifyContent={!isTokenAvailable ? "space-between" : "end"}
+            justifyContent={!isTokenAvailable ? "space-between" : "end"}
             alignItems={"center"}
             flexDirection={"row"}
             gap={2}
           >
-            <Button variant="contained" color="error" startIcon={<YouTube />}>
-              <Link href="/youtube">Youtube</Link>
-            </Button>
-
             <Button
               variant="contained"
               color="error"
               sx={{
-                background:
-                  "radial-gradient(circle farthest-corner at 0% 150%, rgb(255, 225, 125) 0%, rgb(255, 205, 105) 12%, rgb(250, 145, 55) 25%, rgb(235, 65, 65) 41%, transparent 95%), linear-gradient(-15deg, rgb(35, 75, 215) -10%, rgb(195, 60, 190) 65%)",
+                background: !isTokenAvailable
+                  ? "radial-gradient(circle farthest-corner at 0% 150%, rgb(255, 225, 125) 0%, rgb(255, 205, 105) 12%, rgb(250, 145, 55) 25%, rgb(235, 65, 65) 41%, transparent 95%), linear-gradient(-15deg, rgb(35, 75, 215) -10%, rgb(195, 60, 190) 65%)"
+                  : "",
               }}
-              startIcon={<Instagram />}
+              startIcon={!isTokenAvailable ? <Instagram /> : <Logout />}
+              onClick={() => {
+                !isTokenAvailable ? handleLoginOauthInstagram() : handleLogout();
+              }}
+              disabled={loginLoading || loading}
             >
-              <Link href="/instagram">Instagram</Link>
+              {!isTokenAvailable ? "Instagram" : "Log Out"}
             </Button>
           </Box>
           <Box display={"flex"} flexDirection="column" gap={1.5}>
@@ -795,6 +788,183 @@ export default function Home() {
                 },
               }}
             />
+            {isTokenAvailable ? (
+              <Box
+                display={"flex"}
+                justifyContent={"space-between"}
+                alignItems={"center"}
+                flexDirection={{ xs: "column", sm: "row" }}
+                gap={1.5}
+              >
+                {!!logList.length ? (
+                  <Button
+                    variant="outlined"
+                    color="success"
+                    startIcon={<Download width={20} height={20} />}
+                    disabled={loading}
+                    onClick={() => {
+                      handleDownloadLogFile();
+                    }}
+                    fullWidth
+                  >
+                    Download Log file
+                  </Button>
+                ) : null}
+                <Button
+                  variant="contained"
+                  color={detectedCommentList.length > 0 ? "warning" : "success"}
+                  startIcon={
+                    detectedCommentList.length > 0 ? (
+                      <KatanaIcon width={20} height={20} />
+                    ) : (
+                      <RemoveRedEye width={20} height={20} />
+                    )
+                  }
+                  disabled={loading}
+                  onClick={() => {
+                    detectedCommentList.length > 0
+                      ? handleDeleteJudolComments()
+                      : handleDetectJudolComments();
+                  }}
+                  fullWidth
+                >
+                  {detectedCommentList.length > 0
+                    ? "Confirm Delete Judol Comments"
+                    : "Detect Judol Comments"}
+                </Button>
+              </Box>
+            ) : null}
+            {!!logList.length ? (
+              <Box
+                display={"flex"}
+                justifyContent={"space-between"}
+                // alignItems={"center"}
+                gap={1.5}
+                flexDirection={{ xs: "column", sm: "row" }}
+                sx={{ mb: 15 }}
+              >
+                <Box
+                  display={"flex"}
+                  flexDirection="column"
+                  gap={1.5}
+                  justifyContent={"left"}
+                  alignItems={"left"}
+                  sx={{
+                    maxHeight: window.innerHeight * 0.35,
+                    overflowY: "auto",
+                    width: "100%",
+                    padding: "8px",
+                    backgroundColor: "rgba(255, 255, 255, 0.8)",
+                    borderRadius: "4px",
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                    // style the scrollbar
+                    "&::-webkit-scrollbar": {
+                      width: "8px",
+                    },
+                    "&::-webkit-scrollbar-track": {
+                      background: "rgba(0, 0, 0, 0.1)",
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                      background: "rgba(0, 0, 0, 0.3)",
+                      borderRadius: "4px",
+                    },
+                    "&::-webkit-scrollbar-thumb:hover": {
+                      background: "rgba(0, 0, 0, 0.5)",
+                    },
+                  }}
+                >
+                  {logList.map((log, index) => (
+                    <Typography
+                      key={index}
+                      variant="subtitle2"
+                      sx={{
+                        backgroundColor: "white",
+                        borderRadius: "4px",
+                        padding: "8px",
+                        width: "100%",
+                      }}
+                    >
+                      {log}
+                    </Typography>
+                  ))}
+                </Box>
+                <Box
+                  display={"flex"}
+                  flexDirection="column"
+                  gap={1.5}
+                  justifyContent={"left"}
+                  alignItems={"left"}
+                  sx={{
+                    maxHeight: window.innerHeight - 410,
+                    overflowY: "auto",
+                    width: "100%",
+                    px: 2,
+                    pb: 2,
+                    backgroundColor: "rgba(255, 255, 255, 0.8)",
+                    borderRadius: "4px",
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                    // style the scrollbar
+                    "&::-webkit-scrollbar": {
+                      width: "8px",
+                    },
+                    "&::-webkit-scrollbar-track": {
+                      background: "rgba(0, 0, 0, 0.1)",
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                      background: "rgba(0, 0, 0, 0.3)",
+                      borderRadius: "4px",
+                    },
+                    "&::-webkit-scrollbar-thumb:hover": {
+                      background: "rgba(0, 0, 0, 0.5)",
+                    },
+                  }}
+                >
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      fontWeight: "bold",
+                      color: "#383838",
+                      position: "sticky",
+                      top: 0,
+                      bgcolor: "rgba(255, 255, 255)",
+                      zIndex: 1,
+                      pt: 2,
+                    }}
+                  >
+                    {`Detected Judol Comments (${detectedCommentList.length})`}
+                  </Typography>
+                  {detectedCommentList.map((comment, index) => (
+                    <Box
+                      key={index}
+                      display="flex"
+                      flexDirection="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      sx={{ width: "100%" }}
+                    >
+                      <Checkbox
+                        value={comment.commentId}
+                        onChange={(e) => {
+                          handleCommentCheckboxChange(e);
+                        }}
+                        defaultChecked={comment.mustBeDelete}
+                      />
+                      <Typography
+                        variant="subtitle2"
+                        sx={{
+                          backgroundColor: "white",
+                          borderRadius: "4px",
+                          padding: "8px",
+                          width: "100%",
+                        }}
+                      >
+                        {comment.commentText}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            ) : null}
           </Box>
         </main>
         <footer className={styles.footer}>
