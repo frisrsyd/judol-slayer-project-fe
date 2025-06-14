@@ -72,8 +72,44 @@ async function handleInstagramAuth(req: any, res: any) {
         .catch((err) => reject(err));
     });
 
-    setToken(token as any, res);
-    console.log("Token retrieved and set successfully:", token);
+    if (token) {
+      const refreshToken = await new Promise((resolve, reject) => {
+        fetch(access_token_uri, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            client_id: String(client_id),
+            client_secret: String(client_secret),
+            grant_type: "ig_exchange_token",
+            access_token: String((token as any).access_token),
+          }),
+        })
+          .then(async (response) => {
+            if (!response.ok) {
+              const errorData = await response.json();
+              return reject(errorData);
+            }
+            const data = await response.json();
+            resolve(data);
+          })
+          .catch((err) => reject(err));
+      });
+
+      // Add refresh token and its expiry to token object before setting it
+      (token as any).refresh_token_instagram = (
+        refreshToken as any
+      ).access_token;
+      (token as any).refresh_token_expires_in = (
+        refreshToken as any
+      ).expires_in;
+
+      setToken(token as any, res);
+      console.log("Token retrieved and set successfully:", token);
+
+      return res.status(200).json(token);
+    }
 
     return token;
   }
