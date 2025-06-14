@@ -43,7 +43,7 @@ interface VerifiedRefreshToken {
   refresh_token_instagram?: string;
 }
 
-function getToken(req: any) {
+function getToken(req: any) : VerifiedToken {
   const cookie = req.cookies?.token_instagram;
   if (!cookie) {
     throw new Error("Token not found in cookies");
@@ -69,7 +69,7 @@ function getToken(req: any) {
     (verifiedToken as VerifiedToken).haveRefreshToken = true;
   }
   console.log("verifiedToken: ", verifiedToken);
-  return verifiedToken;
+  return verifiedToken as VerifiedToken;
 }
 
 function isTokenValid(req: any) {

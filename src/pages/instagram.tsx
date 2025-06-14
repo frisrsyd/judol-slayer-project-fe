@@ -16,6 +16,7 @@ import * as React from "react";
 import {
   ArrowBack,
   Close,
+  Delete,
   Download,
   GitHub,
   Google,
@@ -188,7 +189,7 @@ export default function Home() {
         // Listen for the code from the popup
         const handleMessage = async (event: MessageEvent) => {
           // if (event.origin !== window.location.origin) return;
-            const { code } = event.data || {};
+          const { code } = event.data || {};
           env !== "production" && console.log("Received code:", code);
           if (popup?.closed && !!code === false) {
             window.removeEventListener("message", handleMessage);
@@ -209,18 +210,32 @@ export default function Home() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ code }),
             });
-            const tokenData = await tokenResponse.json();
-            env !== "production" &&
-              console.log("Token response from server:", tokenData);
-            setAlert({
-              isopen: true,
-              type: "success",
-              message:
-                tokenData?.message ||
-                "Login successful! Judol Slayer is ready to slay!",
-            });
-            tokenIsValid();
-            setLoginLoading(false);
+            if (tokenResponse.ok) {
+              const tokenData = await tokenResponse.json();
+              env !== "production" &&
+                console.log("Token response from server:", tokenData);
+              setAlert({
+                isopen: true,
+                type: "success",
+                message:
+                  tokenData?.message ||
+                  "Login successful! Judol Slayer is ready to slay!",
+              });
+              tokenIsValid();
+              setLoginLoading(false);
+            } else {
+              const errorData = await tokenResponse.json();
+              env !== "production" &&
+                console.error("Error exchanging code for tokens:", errorData);
+              setAlert({
+                isopen: true,
+                type: "error",
+                message:
+                  errorData?.error ||
+                  "Login failed. Please try again!. if you see this error multiple times, please contact the developer.",
+              });
+              setLoginLoading(false);
+            }
           }
         };
         window.addEventListener("message", handleMessage);
@@ -233,6 +248,59 @@ export default function Home() {
           type: "info",
           message: data.message || "Judol Slayer is ready to slay!",
         });
+      }
+    } catch (error) {
+      setLoginLoading(false);
+      env !== "production" &&
+        console.error("Error logging in with Instagram:", error);
+      setAlert({
+        isopen: true,
+        type: "error",
+        message: "Login failed. Please try again.",
+      });
+    }
+  };
+
+  const handleLoginOauthInstagramMock = async () => {
+    try {
+      setLoginLoading(true);
+
+      const code =
+        "AQCMIQYZ3uDeTDTO_LN2EaRO7xSx2IV0Tmnf5MgC5yH7FqKQX5X93QCXElGRBXiLJTfHNuugL6PkQStO6PTjmJl9MG0fEurD_8hzMpL5xyQJ8-hrZHhedmbaU2UwbwI3NYfDOXLvUyUfiVzAPmvBql5xVOI_qRrrJN0Ef-v3sFOJ86x1inyiAPznk9JHzhP_kTXvr5psK_w8rZjOSwXrkQ9QFWdib6_mA1WHekrkGoSCgA#_";
+
+      if (code) {
+        // Exchange code for tokens
+        const tokenResponse = await fetch("/api/instagram-oauth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+        if (tokenResponse.ok) {
+          const tokenData = await tokenResponse.json();
+          env !== "production" &&
+            console.log("Token response from server:", tokenData);
+          setAlert({
+            isopen: true,
+            type: "success",
+            message:
+              tokenData?.message ||
+              "Login successful! Judol Slayer is ready to slay!",
+          });
+          tokenIsValid();
+          setLoginLoading(false);
+        } else {
+          const errorData = await tokenResponse.json();
+          env !== "production" &&
+            console.error("Error exchanging code for tokens:", errorData);
+          setAlert({
+            isopen: true,
+            type: "error",
+            message:
+              errorData?.error +
+              ". Login failed. Please try again!. if you see this error multiple times, please contact the developer.",
+          });
+          setLoginLoading(false);
+        }
       }
     } catch (error) {
       setLoginLoading(false);
@@ -321,7 +389,9 @@ export default function Home() {
     setDetectedCommentList([]);
     setLoading(true);
     // const eventSource = new EventSource("/api/do-delete-judol-comments-new");
-    const eventSource = new EventSource("/api/do-detect-judol-comments");
+    const eventSource = new EventSource(
+      "/api/instagram/do-detect-judol-comments"
+    );
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -486,7 +556,7 @@ export default function Home() {
     }
 
     // Use fetch + ReadableStream for SSE with POST
-    const response = await fetch("/api/do-delete-judol-comments", {
+    const response = await fetch("/api/instagram/do-delete-judol-comments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ commentIds: commentIdsToDelete }),
@@ -697,13 +767,13 @@ export default function Home() {
             />
             <KatanaIcon width={34} height={34} color="#383838" />
           </Box>
-          {/* {!isTokenAvailable ? (
+          {!isTokenAvailable ? (
             <Typography>
               You can{" "}
               <Typography
                 component="a"
                 color="primary"
-                href="https://myaccount.google.com/permissions"
+                href="https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.instagram.com%2Faccounts%2Fmanage_access%2F&h=AT2JdOKQYUN92sY9ekuzAldOzbsn8MetjaXjjvND9x5jTzBCfKOU1TR8IEmu1Tv_KCLrSL3I4EuSlhgk6bup3ZZ5g7KWc-hPnT57lZ63XO1dmEHujnNZfmKIldR-YSeT9acjDw"
                 target="_blank"
                 sx={{ textDecoration: "underline" }}
               >
@@ -711,7 +781,7 @@ export default function Home() {
               </Typography>{" "}
               if you don't want to use this app anymore!
             </Typography>
-          ) : null} */}
+          ) : null}
 
           <Box
             display={"flex"}
@@ -730,12 +800,27 @@ export default function Home() {
               }}
               startIcon={!isTokenAvailable ? <Instagram /> : <Logout />}
               onClick={() => {
-                !isTokenAvailable ? handleLoginOauthInstagram() : handleLogout();
+                !isTokenAvailable
+                  ? handleLoginOauthInstagram()
+                  : handleLogout();
               }}
               disabled={loginLoading || loading}
             >
-              {!isTokenAvailable ? "Instagram" : "Log Out"}
+              {!isTokenAvailable ? "Login with Instagram" : "Log Out"}
             </Button>
+            {/* <Button
+              variant="contained"
+              color="error"
+              startIcon={!isTokenAvailable ? <Instagram /> : <Logout />}
+              onClick={() => {
+                !isTokenAvailable
+                  ? handleLoginOauthInstagramMock()
+                  : handleLogout();
+              }}
+              disabled={loginLoading || loading}
+            >
+              {!isTokenAvailable ? "Login mock" : "Log Out"}
+            </Button> */}
           </Box>
           <Box display={"flex"} flexDirection="column" gap={1.5}>
             <Autocomplete
@@ -797,41 +882,75 @@ export default function Home() {
                 gap={1.5}
               >
                 {!!logList.length ? (
+                  <Box
+                    display={"flex"}
+                    justifyContent={"space-between"}
+                    alignItems={"center"}
+                    flexDirection={{ xs: "column", sm: "row" }}
+                    width={"100%"}
+                    gap={1}
+                  >
+                    <Button
+                      variant="contained"
+                      color="error"
+                      startIcon={<Delete width={20} height={20} />}
+                      disabled={loading}
+                      onClick={() => {
+                        setLogList([]);
+                      }}
+                      fullWidth
+                    >
+                      Clear Log
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="success"
+                      startIcon={<Download width={20} height={20} />}
+                      disabled={loading}
+                      onClick={() => {
+                        handleDownloadLogFile();
+                      }}
+                      fullWidth
+                    >
+                      Download Log file
+                    </Button>
+                  </Box>
+                ) : null}
+                <Box
+                  display={"flex"}
+                  justifyContent={"space-between"}
+                  alignItems={"center"}
+                  flexDirection={{ xs: "column", sm: "row" }}
+                  width={"100%"}
+                  gap={1}
+                >
                   <Button
-                    variant="outlined"
-                    color="success"
-                    startIcon={<Download width={20} height={20} />}
+                    variant="contained"
+                    color={"success"}
+                    startIcon={<RemoveRedEye width={20} height={20} />}
                     disabled={loading}
                     onClick={() => {
-                      handleDownloadLogFile();
+                      handleDetectJudolComments();
                     }}
                     fullWidth
                   >
-                    Download Log file
+                    Detect Judol Comments
                   </Button>
-                ) : null}
-                <Button
-                  variant="contained"
-                  color={detectedCommentList.length > 0 ? "warning" : "success"}
-                  startIcon={
-                    detectedCommentList.length > 0 ? (
-                      <KatanaIcon width={20} height={20} />
-                    ) : (
-                      <RemoveRedEye width={20} height={20} />
-                    )
-                  }
-                  disabled={loading}
-                  onClick={() => {
-                    detectedCommentList.length > 0
-                      ? handleDeleteJudolComments()
-                      : handleDetectJudolComments();
-                  }}
-                  fullWidth
-                >
-                  {detectedCommentList.length > 0
-                    ? "Confirm Delete Judol Comments"
-                    : "Detect Judol Comments"}
-                </Button>
+                  {detectedCommentList.length > 0 ? (
+                    <Button
+                      variant="contained"
+                      color={"warning"}
+                      startIcon={<KatanaIcon width={20} height={20} />}
+                      disabled={loading}
+                      onClick={() => {
+                        handleDeleteJudolComments();
+                      }}
+                      fullWidth
+                    >
+                      Confirm Delete Judol Comments
+                    </Button>
+                  ) : null}
+                </Box>
               </Box>
             ) : null}
             {!!logList.length ? (

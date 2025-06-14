@@ -16,6 +16,7 @@ import * as React from "react";
 import {
   ArrowBack,
   Close,
+  Delete,
   Download,
   GitHub,
   Google,
@@ -856,41 +857,75 @@ export default function Home() {
                 gap={1.5}
               >
                 {!!logList.length ? (
+                  <Box
+                    display={"flex"}
+                    justifyContent={"space-between"}
+                    alignItems={"center"}
+                    flexDirection={{ xs: "column", sm: "row" }}
+                    width={"100%"}
+                    gap={1}
+                  >
+                    <Button
+                      variant="contained"
+                      color="error"
+                      startIcon={<Delete width={20} height={20} />}
+                      disabled={loading}
+                      onClick={() => {
+                        setLogList([]);
+                      }}
+                      fullWidth
+                    >
+                      Clear Log
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="success"
+                      startIcon={<Download width={20} height={20} />}
+                      disabled={loading}
+                      onClick={() => {
+                        handleDownloadLogFile();
+                      }}
+                      fullWidth
+                    >
+                      Download Log file
+                    </Button>
+                  </Box>
+                ) : null}
+                <Box
+                  display={"flex"}
+                  justifyContent={"space-between"}
+                  alignItems={"center"}
+                  flexDirection={{ xs: "column", sm: "row" }}
+                  width={"100%"}
+                  gap={1}
+                >
                   <Button
-                    variant="outlined"
-                    color="success"
-                    startIcon={<Download width={20} height={20} />}
+                    variant="contained"
+                    color={"success"}
+                    startIcon={<RemoveRedEye width={20} height={20} />}
                     disabled={loading}
                     onClick={() => {
-                      handleDownloadLogFile();
+                      handleDetectJudolComments();
                     }}
                     fullWidth
                   >
-                    Download Log file
+                    Detect Judol Comments
                   </Button>
-                ) : null}
-                <Button
-                  variant="contained"
-                  color={detectedCommentList.length > 0 ? "warning" : "success"}
-                  startIcon={
-                    detectedCommentList.length > 0 ? (
-                      <KatanaIcon width={20} height={20} />
-                    ) : (
-                      <RemoveRedEye width={20} height={20} />
-                    )
-                  }
-                  disabled={loading}
-                  onClick={() => {
-                    detectedCommentList.length > 0
-                      ? handleDeleteJudolComments()
-                      : handleDetectJudolComments();
-                  }}
-                  fullWidth
-                >
-                  {detectedCommentList.length > 0
-                    ? "Confirm Delete Judol Comments"
-                    : "Detect Judol Comments"}
-                </Button>
+                  {detectedCommentList.length > 0 ? (
+                    <Button
+                      variant="contained"
+                      color={"warning"}
+                      startIcon={<KatanaIcon width={20} height={20} />}
+                      disabled={loading}
+                      onClick={() => {
+                        handleDeleteJudolComments();
+                      }}
+                      fullWidth
+                    >
+                      Confirm Delete Judol Comments
+                    </Button>
+                  ) : null}
+                </Box>
               </Box>
             ) : null}
             {!!logList.length ? (

@@ -2,7 +2,9 @@ import { getBlockedWords } from "./blocked-words";
 import { handleGoogleAuth } from "./google";
 import { google } from "googleapis";
 import * as fuzz from "fuzzball";
-import { deleteToken } from "./token";
+import { deleteToken, getToken } from "./token-instagram";
+
+const instagramApiBaseUrl = process.env.NEXT_PUBLIC_INSTAGRAM_API;
 
 function normalizeText(text: string): string {
   return text
@@ -14,25 +16,26 @@ function normalizeText(text: string): string {
 
 async function fetchComments(
   req: any,
-  auth: any,
-  VIDEO_ID: any,
+  MEDIA_ID: any,
   logs: string[],
   logCallback: (log: string) => void
 ) {
-  const youtube = google.youtube({ version: "v3", auth });
-
   try {
-    const response = await youtube.commentThreads.list({
-      part: ["snippet"],
-      videoId: VIDEO_ID,
-      maxResults: 100,
+    const getCommentBaseUrl = `${instagramApiBaseUrl}/${MEDIA_ID}/comments?fields=id,text`;
+    const response = await fetch(getCommentBaseUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${getToken(req).access_token}`,
+      },
     });
 
     const spamComments: Array<any> = [];
+    const responseData = await response.json();
 
-    response.data.items?.forEach((item) => {
-      const comment = item?.snippet?.topLevelComment?.snippet;
-      const commentText = comment?.textDisplay;
+    console.log("Fetched comments:", responseData);
+
+    responseData.data?.forEach((item: any) => {
+      const commentText = item?.text;
       const commentId = item.id;
 
       const checkLog = `Checking comment: "${commentText}"`;
@@ -135,29 +138,34 @@ function getJudolComment(
 // Delete comments
 async function deleteComments(
   res: any,
-  auth: any,
+  req: any,
   commentIds: any,
   logCallback: (log: string) => void
 ) {
-  const youtube = google.youtube({ version: "v3", auth });
-
   const totalCommentsToBeDeleted = commentIds.length;
   let totalDeletedComments = 0;
-  do {
-    const commentIdsChunk = commentIds.splice(0, 50);
-    if (commentIdsChunk.length === 0) break;
+  const token = getToken(req).access_token;
+  const deleteCommentBaseUrl = `${instagramApiBaseUrl}`;
+  // Instagram API does not support bulk deletion, so delete one by one
+  for (const commentId of commentIds) {
     try {
-      await youtube.comments.setModerationStatus({
-        id: commentIdsChunk,
-        moderationStatus: "rejected",
+      const response = await fetch(`${deleteCommentBaseUrl}/${commentId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      totalDeletedComments += commentIdsChunk.length;
-      const progressLog = `Progress: ${totalDeletedComments}/${totalCommentsToBeDeleted} (${commentIds.length} remaining)\n`;
-      const deletedIdsLog = `Deleted the following comment IDs: ${commentIdsChunk}`;
-      console.log(progressLog);
-      logCallback(progressLog); // Send progress log in real-time
-      console.log(deletedIdsLog);
-      logCallback(deletedIdsLog); // Send deleted IDs log in real-time
+      if (response.ok) {
+        totalDeletedComments += 1;
+        const progressLog = `Progress: ${totalDeletedComments}/${totalCommentsToBeDeleted} (${
+          commentIds.length - totalDeletedComments
+        } remaining)\n`;
+        const deletedIdsLog = `Deleted the following comment ID: ${commentId}`;
+        console.log(progressLog);
+        logCallback(progressLog); // Send progress log in real-time
+        console.log(deletedIdsLog);
+        logCallback(deletedIdsLog); // Send deleted IDs log in real-time
+      }
     } catch (error) {
       if (
         (error as any)?.response?.data?.error === "invalid_grant" ||
@@ -169,44 +177,50 @@ async function deleteComments(
         deleteToken(res);
         throw new Error("Invalid token. Please re-authenticate.");
       }
-      const errorLog = `Failed to delete these comment IDs: ${commentIdsChunk}: ${
+      const errorLog = `Failed to delete this comment ID: ${commentId}: ${
         (error as Error).message
       }`;
       console.error(errorLog);
       logCallback(errorLog); // Send error log in real-time
     }
-  } while (commentIds.length > 0);
+  }
 }
 
-async function youtubeContentList(auth: any, res: any) {
-  const youtube = google.youtube({ version: "v3", auth });
+async function instagramContentList(res: any, req: any) {
+  const getMediaUrl = `${instagramApiBaseUrl}/me/media?fields=id,permalink`;
+  const { access_token } = getToken((req = req));
 
   try {
-    const response = await youtube.channels.list({
-      part: ["contentDetails"],
-      mine: true,
-    });
+    if (!access_token) {
+      throw new Error("Access token is required to fetch Instagram content.");
+    }
 
-    const channel = response.data?.items?.[0] ?? null;
-    const uploadsPlaylistId =
-      channel?.contentDetails?.relatedPlaylists?.uploads;
-
+    // Collect all Instagram media IDs, handling pagination
     const allVideos = [];
     let nextPageToken = "";
-
+    let hasNext = true;
+    let nextPageUrl = getMediaUrl;
     do {
-      const playlistResponse = await youtube.playlistItems.list({
-        part: ["snippet"],
-        playlistId: uploadsPlaylistId,
-        maxResults: 50,
-        pageToken: nextPageToken,
+      const response = await fetch(nextPageUrl, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
       });
-
-      if (playlistResponse.data.items) {
-        allVideos.push(...playlistResponse.data.items);
+      const data = await response.json();
+      console.log("Fetched data:", data);
+      if (Array.isArray(data.data)) {
+        allVideos.push(...data.data.map((item: any) => item));
       }
-      nextPageToken = playlistResponse.data.nextPageToken || "";
-    } while (nextPageToken);
+      if (data.paging && data.paging.next && data.paging.cursors?.after) {
+        nextPageToken = data.paging.cursors.after;
+        nextPageUrl = getMediaUrl + `&after=${nextPageToken}`;
+        hasNext = true;
+      } else {
+        hasNext = false;
+      }
+    } while (hasNext);
+
     return allVideos;
   } catch (error) {
     console.error(
@@ -235,29 +249,23 @@ async function doDetectJudolComment(
   commentCallback: (comment: {
     commentId: string;
     commentText: string;
-    videoId: string;
+    id: string;
     videoTitle: string;
     mustBeDelete: boolean;
   }) => void
 ) {
   try {
-    const auth = await handleGoogleAuth(req, res);
-    const contentList = await youtubeContentList(auth, res);
+    const contentList = await instagramContentList(res, req);
+    console.log(" Content List: ", contentList);
 
-    for (const video of contentList) {
-      const title = video?.snippet?.title;
-      const videoId = video.snippet?.resourceId?.videoId;
-      const logMessage = `\n📹 Checking video: ${title} (ID: ${videoId})`;
+    for (const content of contentList) {
+      const permalink = content?.permalink;
+      const id = content.id;
+      const logMessage = `\n📹 Checking content: ${permalink} (ID: ${id})`;
       console.log(logMessage);
       logCallback(logMessage); // Send log in real-time
 
-      const spamComments = await fetchComments(
-        req,
-        auth,
-        videoId,
-        [],
-        logCallback
-      );
+      const spamComments = await fetchComments(req, id, [], logCallback);
 
       if (spamComments.length > 0) {
         const spamLog = `🚫 Found ${spamComments.length} spam comments.`;
@@ -269,8 +277,8 @@ async function doDetectJudolComment(
           commentCallback({
             commentId: spam.commentId,
             commentText: spam.commentText,
-            videoId: videoId ?? "",
-            videoTitle: title ?? "",
+            id: id ?? "",
+            videoTitle: permalink ?? "",
             mustBeDelete: true,
           });
         }
@@ -303,9 +311,7 @@ async function doDeleteJudolComment(
       throw new Error("No comment IDs provided for deletion.");
     }
 
-    const auth = await handleGoogleAuth(req, res);
-
-    await deleteComments(res, auth, [...commentIds], logCallback);
+    await deleteComments(res, req, [...commentIds], logCallback);
 
     logCallback(`✅ Selected comments deleted successfully.`);
     return { success: true };
