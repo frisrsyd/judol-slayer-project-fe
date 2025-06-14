@@ -204,7 +204,7 @@ export default function Home() {
             popup?.close();
 
             // Exchange code for tokens
-            const tokenResponse = await fetch("/api/insagram-oauth", {
+            const tokenResponse = await fetch("/api/instagram-oauth", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ code }),
@@ -256,7 +256,7 @@ export default function Home() {
             "Content-Type": "application/json",
           },
         }),
-        fetch("/api/insagram-oauth-revoke", {
+        fetch("/api/instagram-oauth-revoke", {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
