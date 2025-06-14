@@ -72,22 +72,18 @@ async function handleInstagramAuth(req: any, res: any) {
         .catch((err) => reject(err));
     });
 
-    console.log("Token received:", token);
+    console.log("Token received:", (token as any).access_token);
 
     if (token) {
       const refreshToken = await new Promise((resolve, reject) => {
-        fetch(access_token_uri, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({
-            client_id: String(client_id),
-            client_secret: String(client_secret),
-            grant_type: "ig_exchange_token",
-            access_token: String((token as any).access_token),
-          }),
-        })
+        fetch(
+          `${access_token_uri}?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(
+            client_secret
+          )}&access_token=${encodeURIComponent((token as any).access_token)}`,
+          {
+            method: "GET",
+          }
+        )
           .then(async (response) => {
             if (!response.ok) {
               const errorData = await response.json();
