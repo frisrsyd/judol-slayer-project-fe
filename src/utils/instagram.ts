@@ -72,6 +72,8 @@ async function handleInstagramAuth(req: any, res: any) {
         .catch((err) => reject(err));
     });
 
+    console.log("Token received:", token);
+
     if (token) {
       const refreshToken = await new Promise((resolve, reject) => {
         fetch(access_token_uri, {
