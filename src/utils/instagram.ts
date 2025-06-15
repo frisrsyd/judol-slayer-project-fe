@@ -1,7 +1,7 @@
 import { getToken, setToken } from "./token-instagram";
 
 const redirect_uris = process.env.NEXT_PUBLIC_INSTAGRAM_REDIRECT_URIS;
-const SCOPES = ["instagram_business_manage_comments"];
+const SCOPES = ["instagram_business_manage_comments","instagram_business_basic"];
 
 async function handleInstagramAuth(req: any, res: any) {
   const credentialsWeb = process.env.NEXT_PUBLIC_INSTAGRAM_CREDENTIALS;
