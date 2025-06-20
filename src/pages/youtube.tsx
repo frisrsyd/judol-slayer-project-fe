@@ -7,8 +7,11 @@ import {
   Box,
   Button,
   Checkbox,
+  Grid,
   IconButton,
   LinearProgress,
+  Stack,
+  Switch,
   TextField,
   Typography,
 } from "@mui/material";
@@ -62,6 +65,7 @@ export default function Home() {
   >([]);
   const [loginLoading, setLoginLoading] = React.useState<boolean>(false);
   const [loading, setLoading] = React.useState<boolean>(false);
+  const [strictMode, setStrictMode] = React.useState<boolean>(true);
   const [alert, setAlert] = React.useState<AlertProps>({
     isopen: false,
     type: "info",
@@ -172,74 +176,6 @@ export default function Home() {
   React.useEffect(() => {
     getBlockedWords();
   }, []);
-
-  // const handleLoginOauthGoogle = async () => {
-  //   try {
-  //     setLoginLoading(true);
-  //     // Step 1: Get the Google OAuth URL
-  //     const response = await fetch("/api/google-oauth", {
-  //       method: "GET",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //     });
-  //     const data = await response.json();
-  //     // env !== "production" && console.log("Response from BE:", data);
-
-  //     if (data?.url) {
-  //       // Step 2: Redirect the user to the OAuth URL
-  //       env !== "production" && console.log("OAuth URL:", data.url);
-  //       const popup = window.open(data.url, "_blank", "width=600,height=600");
-
-  //       // Step 3: Listen for the authorization code
-  //       const interval = setInterval(async () => {
-  //         try {
-  //           if (popup?.closed) {
-  //             clearInterval(interval);
-  //             env !== "production" && console.error(
-  //               "Popup closed before completing the login process."
-  //             );
-  //             // setLoginLoading(false);
-  //             return;
-  //           }
-
-  //           const urlParams = new URLSearchParams(popup?.location.search);
-  //           const code = urlParams.get("code");
-
-  //           if (code) {
-  //             clearInterval(interval);
-  //             popup?.close();
-
-  //             // Step 4: Send the authorization code to the API
-  //             const tokenResponse = await fetch("/api/google-oauth", {
-  //               method: "POST",
-  //               headers: {
-  //                 "Content-Type": "application/json",
-  //               },
-  //               body: JSON.stringify({ code }),
-  //             });
-
-  //             const tokenData = await tokenResponse.json();
-  //             env !== "production" && console.log("Token response from server:", tokenData);
-  //             tokenIsValid();
-  //             // setLoginLoading(false);
-  //           }
-  //         } catch (error) {
-  //           setLoginLoading(false);
-  //           env !== "production" && console.error("Error during login process:", error);
-  //           // Ignore cross-origin errors until the popup redirects to the same origin
-  //         }
-  //       }, 500);
-  //     } else {
-  //       env !== "production" && console.log(data.message);
-  //       tokenIsValid();
-  //       // setLoginLoading(false);
-  //     }
-  //   } catch (error) {
-  //     setLoginLoading(false);
-  //     env !== "production" && console.error("Error logging in with Google:", error);
-  //   }
-  // };
 
   const handleLoginOauthGoogle = async () => {
     try {
@@ -606,6 +542,74 @@ export default function Home() {
     // setLoading(false);
   };
 
+  const handleStrictModeChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const newStrictMode = event.target.checked;
+    setStrictMode(newStrictMode);
+
+    try {
+      const response = await fetch("/api/strict-mode/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ strictMode: newStrictMode }),
+      });
+
+      const data = await response.json();
+      env !== "production" && console.log("Response from server:", data);
+      if (response.ok) {
+        setAlert({
+          isopen: true,
+          type: "success",
+          message: `Strict mode is now ${
+            newStrictMode ? "enabled" : "disabled"
+          }!`,
+        });
+      } else {
+        setAlert({
+          isopen: true,
+          type: "error",
+          message: data.error || "Error saving strict mode.",
+        });
+      }
+    } catch (error) {
+      env !== "production" && console.error("Error saving strict mode:", error);
+      setAlert({
+        isopen: true,
+        type: "error",
+        message: "Error saving strict mode. Please try again.",
+      });
+    }
+  };
+
+  const getStrictMode = async () => {
+    try {
+      const response = await fetch("/api/strict-mode/read", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      env !== "production" && console.log("Response from server:", data);
+      if (data.strictMode === null || data.strictMode === undefined) {
+        handleStrictModeChange({
+          target: { checked: strictMode },
+        } as React.ChangeEvent<HTMLInputElement>);
+      } else {
+        setStrictMode(data.strictMode);
+      }
+    } catch (error) {
+      env !== "production" &&
+        console.error("Error getting strict mode:", error);
+    }
+  };
+  React.useEffect(() => {
+    getStrictMode();
+  }, []);
+
   return (
     <>
       <Head>
@@ -699,7 +703,7 @@ export default function Home() {
             justifyContent={"left"}
             alignItems={"center"}
             flexDirection={"column"}
-            position={"absolute"}
+            position={{ xs: "relative", lg: "absolute" }}
           >
             <Link
               href="/"
@@ -798,56 +802,112 @@ export default function Home() {
             </Button>
           </Box>
           <Box display={"flex"} flexDirection="column" gap={1.5}>
-            <Autocomplete
-              fullWidth
-              disablePortal
-              id="blocked-words"
-              options={[]}
-              disabled={loading}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Blocked Words"
-                  placeholder="Hit Enter to submit/save blocked words"
-                  sx={{
-                    backgroundColor: "white",
-                    borderRadius: "4px",
+            <Grid
+              container
+              spacing={1.5}
+              sx={{ width: "100%" }}
+              justifyContent={"space-between"}
+              columns={{ xs: 4, sm: 8, md: 12 }}
+            >
+              <Grid size={{ xs: 4, sm: 8, md: 6 }}>
+                <Autocomplete
+                  fullWidth
+                  disablePortal
+                  id="blocked-words"
+                  options={[]}
+                  disabled={loading}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Blocked Words"
+                      placeholder="Hit Enter to submit/save blocked words"
+                      sx={{
+                        backgroundColor: "white",
+                        borderRadius: "4px",
+                      }}
+                      helperText="Input blocked words and press enter to add, programm will check the similarity, this only help to reduce the word you should enter, but not 100% accurate"
+                    />
+                  )}
+                  onChange={(event, newValue) => {
+                    onBlockedWordsChange(newValue); // newValue is array
                   }}
-                  helperText="Input blocked words and press enter to add, programm will check the similarity, this only help to reduce the word you should enter, but not 100% accurate"
+                  onInputChange={(event) => {
+                    // setBlockedWords(event);
+                    // onBlockedWordsChange(event);
+                  }}
+                  value={blockedWords}
+                  freeSolo
+                  multiple
+                  // options={blockedWords}
+                  limitTags={10}
+                  slotProps={{
+                    chip: {
+                      size: "small",
+                      color: "error",
+                      // sx: {
+                      //   backgroundColor: "#951e1e",
+                      //   borderRadius: "8px",
+                      //   marginRight: 1,
+                      // },
+                    },
+                    listbox: {
+                      sx: {
+                        backgroundColor: "white",
+                        borderRadius: "4px",
+                        maxHeight: "50dvh",
+                        overflowY: "auto",
+                      },
+                    },
+                  }}
                 />
-              )}
-              onChange={(event, newValue) => {
-                onBlockedWordsChange(newValue); // newValue is array
-              }}
-              onInputChange={(event) => {
-                // setBlockedWords(event);
-                // onBlockedWordsChange(event);
-              }}
-              value={blockedWords}
-              freeSolo
-              multiple
-              // options={blockedWords}
-              limitTags={10}
-              slotProps={{
-                chip: {
-                  size: "small",
-                  color: "error",
-                  // sx: {
-                  //   backgroundColor: "#951e1e",
-                  //   borderRadius: "8px",
-                  //   marginRight: 1,
-                  // },
-                },
-                listbox: {
-                  sx: {
-                    backgroundColor: "white",
-                    borderRadius: "4px",
-                    maxHeight: "50dvh",
-                    overflowY: "auto",
-                  },
-                },
-              }}
-            />
+              </Grid>
+              <Grid
+                sx={{
+                  bgcolor: "white",
+                  borderRadius: "4px",
+                  p: 1,
+                }}
+                size={{ xs: 4, sm: 8, md: 6 }}
+              >
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ alignItems: "center" }}
+                >
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={"bold"}
+                    sx={{ color: "#383838" }}
+                  >
+                    Strict Mode*
+                  </Typography>
+                  <Switch
+                    checked={strictMode}
+                    onChange={handleStrictModeChange}
+                    slotProps={{
+                      input: { "aria-label": "Strict Mode Switch" },
+                    }}
+                  />
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={"bold"}
+                    color={strictMode ? "success" : "error"}
+                  >
+                    {strictMode ? "ON" : "OFF"}
+                  </Typography>
+                </Stack>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#383838", mt: 0.5, opacity: 0.8 }}
+                >
+                  *Strict mode will detect suspicious comments as Judol
+                  comments, but there is a chance that it will detect false
+                  positives(eg: ²), you can uncheck the comments that you don't want to
+                  delete on the detected comments list after detecting Judol
+                  comments and it will not delete them.
+                </Typography>
+              </Grid>
+            </Grid>
             {isTokenAvailable ? (
               <Box
                 display={"flex"}

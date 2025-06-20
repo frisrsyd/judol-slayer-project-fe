@@ -3,6 +3,7 @@ import { handleGoogleAuth } from "./google";
 import { google } from "googleapis";
 import * as fuzz from "fuzzball";
 import { deleteToken } from "./token";
+import { getStrictMode } from "./strict-mode";
 
 function normalizeText(text: string): string {
   return text
@@ -75,8 +76,14 @@ function getJudolComment(
   //   return true;
   // }
 
+  const fetchStrictMode = getStrictMode(req);
+  const strictMode: boolean =
+    typeof fetchStrictMode === "object" && !!fetchStrictMode
+      ? (fetchStrictMode as { strictMode: boolean }).strictMode
+      : false;
+
   const basicNormalizedText = text.normalize("NFKD");
-  if (text !== basicNormalizedText) {
+  if (text !== basicNormalizedText && strictMode) {
     return true;
   }
 
