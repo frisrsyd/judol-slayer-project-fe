@@ -35,6 +35,7 @@ import BlurText from "@/components/BlurText";
 import Image from "next/image";
 import { log } from "console";
 import Link from "next/link";
+import { Virtuoso } from "react-virtuoso";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -901,6 +902,7 @@ export default function Home() {
               sx={{ width: "100%" }}
               justifyContent={"space-between"}
               columns={{ xs: 4, sm: 8, md: 12 }}
+              mb={{ xs: isTokenAvailable ? 0 : 15, sm: isTokenAvailable ? 0 : 15, md: 0 }}
             >
               <Grid size={{ xs: 4, sm: 8, md: 6 }}>
                 <Autocomplete
@@ -995,9 +997,9 @@ export default function Home() {
                 >
                   *Strict mode will detect suspicious comments as Judol
                   comments, but there is a chance that it will detect false
-                  positives(eg: ²), you can uncheck the comments that you don't want to
-                  delete on the detected comments list after detecting Judol
-                  comments and it will not delete them.
+                  positives(eg: ²), you can uncheck the comments that you don't
+                  want to delete on the detected comments list after detecting
+                  Judol comments and it will not delete them.
                 </Typography>
               </Grid>
             </Grid>
@@ -1051,6 +1053,7 @@ export default function Home() {
                   flexDirection={{ xs: "column", sm: "row" }}
                   width={"100%"}
                   gap={1}
+                  mb={{ xs: logList.length > 0 ? 0 : 15, sm: logList.length > 0 ? 0 : 15, md: 0 }}
                 >
                   <Button
                     variant="contained"
@@ -1104,7 +1107,6 @@ export default function Home() {
                     backgroundColor: "rgba(255, 255, 255, 0.8)",
                     borderRadius: "4px",
                     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                    // style the scrollbar
                     "&::-webkit-scrollbar": {
                       width: "8px",
                     },
@@ -1120,20 +1122,23 @@ export default function Home() {
                     },
                   }}
                 >
-                  {logList.map((log, index) => (
-                    <Typography
-                      key={index}
-                      variant="subtitle2"
-                      sx={{
-                        backgroundColor: "white",
-                        borderRadius: "4px",
-                        padding: "8px",
-                        width: "100%",
-                      }}
-                    >
-                      {log}
-                    </Typography>
-                  ))}
+                  <Virtuoso
+                    style={{ height: window.innerHeight * 0.35 }}
+                    totalCount={logList.length}
+                    itemContent={(index) => (
+                      <Typography
+                        variant="subtitle2"
+                        sx={{
+                          backgroundColor: "white",
+                          borderRadius: "4px",
+                          padding: "8px",
+                          width: "100%",
+                        }}
+                      >
+                        {logList[index]}
+                      </Typography>
+                    )}
+                  />
                 </Box>
                 <Box
                   display={"flex"}
@@ -1142,7 +1147,7 @@ export default function Home() {
                   justifyContent={"left"}
                   alignItems={"left"}
                   sx={{
-                    maxHeight: window.innerHeight - 410,
+                    maxHeight: window.innerHeight * 0.35,
                     overflowY: "auto",
                     width: "100%",
                     px: 2,
@@ -1150,7 +1155,6 @@ export default function Home() {
                     backgroundColor: "rgba(255, 255, 255, 0.8)",
                     borderRadius: "4px",
                     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                    // style the scrollbar
                     "&::-webkit-scrollbar": {
                       width: "8px",
                     },
@@ -1180,35 +1184,41 @@ export default function Home() {
                   >
                     {`Detected Judol Comments (${detectedCommentList.length})`}
                   </Typography>
-                  {detectedCommentList.map((comment, index) => (
-                    <Box
-                      key={index}
-                      display="flex"
-                      flexDirection="row"
-                      alignItems="center"
-                      justifyContent="space-between"
-                      sx={{ width: "100%" }}
-                    >
-                      <Checkbox
-                        value={comment.commentId}
-                        onChange={(e) => {
-                          handleCommentCheckboxChange(e);
-                        }}
-                        defaultChecked={comment.mustBeDelete}
-                      />
-                      <Typography
-                        variant="subtitle2"
-                        sx={{
-                          backgroundColor: "white",
-                          borderRadius: "4px",
-                          padding: "8px",
-                          width: "100%",
-                        }}
-                      >
-                        {comment.commentText}
-                      </Typography>
-                    </Box>
-                  ))}
+                  <Virtuoso
+                    style={{ height: window.innerHeight * 0.35 }}
+                    totalCount={detectedCommentList.length}
+                    itemContent={(index) => {
+                      const comment = detectedCommentList[index];
+                      return (
+                        <Box
+                          display="flex"
+                          flexDirection="row"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          sx={{ width: "100%" }}
+                        >
+                          <Checkbox
+                            value={comment.commentId}
+                            onChange={(e) => {
+                              handleCommentCheckboxChange(e);
+                            }}
+                            defaultChecked={comment.mustBeDelete}
+                          />
+                          <Typography
+                            variant="subtitle2"
+                            sx={{
+                              backgroundColor: "white",
+                              borderRadius: "4px",
+                              padding: "8px",
+                              width: "100%",
+                            }}
+                          >
+                            {comment.commentText}
+                          </Typography>
+                        </Box>
+                      );
+                    }}
+                  />
                 </Box>
               </Box>
             ) : null}
