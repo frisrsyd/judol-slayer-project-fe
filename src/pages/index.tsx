@@ -6,31 +6,22 @@ import {
   Autocomplete,
   Box,
   Button,
-  Checkbox,
   IconButton,
   LinearProgress,
   TextField,
-  Typography,
 } from "@mui/material";
 import * as React from "react";
 import {
   Close,
-  Download,
-  GitHub,
-  Google,
   Instagram,
-  Logout,
-  RemoveRedEye,
-  Web,
   YouTube,
 } from "@mui/icons-material";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { KatanaIcon } from "../../public/katana";
 import CircularText from "@/components/CircularText";
 import BlurText from "@/components/BlurText";
-import Image from "next/image";
-import { log } from "console";
 import Link from "next/link";
+import Footer from "@/components/partials/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -806,79 +797,7 @@ export default function Home() {
             />
           </Box>
         </main>
-        <footer className={styles.footer}>
-          <Box
-            display={"flex"}
-            justifyContent={"center"}
-            alignItems={"center"}
-            flexDirection={"row"}
-            width={"100%"}
-            position={{ xs: "relative", md: "absolute" }}
-            sx={{
-              textAlign: "center",
-            }}
-          >
-            <Typography sx={{ color: "white" }}>
-              &copy; {new Date().getFullYear()} Judol Slayer by
-            </Typography>
-            <Typography
-              component="a"
-              color="info"
-              href="https://frisrsyd.github.io/Portfolio/"
-              target="_blank"
-              sx={{ display: "inline" }}
-            >
-              <Web />
-              frisrsyd
-            </Typography>
-          </Box>
-          <Box
-            display={"flex"}
-            justifyContent={{ xs: "center", sm: "end" }}
-            alignItems={"center"}
-            flexDirection={"row"}
-            width={"100%"}
-            pr={{ xs: 0, sm: 2 }}
-          >
-            <a href="https://ko-fi.com/frisrsyd">
-              {" "}
-              <Image
-                src="/ko-fi-banner.png"
-                alt="frisrsyd"
-                width={250}
-                height={50}
-              />
-            </a>
-          </Box>
-          {/* <a
-            href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              aria-hidden
-              src="/window.svg"
-              alt="Window icon"
-              width={16}
-              height={16}
-            />
-            Examples
-          </a>
-          <a
-            href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              aria-hidden
-              src="/globe.svg"
-              alt="Globe icon"
-              width={16}
-              height={16}
-            />
-            Go to nextjs.org →
-          </a> */}
-        </footer>
+        <Footer />
       </div>
     </>
   );

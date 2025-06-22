@@ -21,21 +21,18 @@ import {
   Close,
   Delete,
   Download,
-  GitHub,
   Google,
-  Instagram,
   Logout,
   RemoveRedEye,
-  Web,
 } from "@mui/icons-material";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { KatanaIcon } from "../../public/katana";
+import { KatanaIcon } from "../../../public/katana";
 import CircularText from "@/components/CircularText";
 import BlurText from "@/components/BlurText";
-import Image from "next/image";
-import { log } from "console";
 import Link from "next/link";
 import { Virtuoso } from "react-virtuoso";
+import { GetServerSidePropsContext } from "next";
+import Footer from "@/components/partials/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -87,8 +84,58 @@ export default function Home() {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
       if (code) {
+        // Send code to opener and ensure message is sent before closing
         window.opener.postMessage({ code }, window.location.origin);
-        window.close();
+        setTimeout(() => window.close(), 100); // Give time for message to be sent
+      }
+    } else if (window.location.search.includes("code=")) {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      if (code) {
+        setTimeout(async () => {
+          if (!isTokenAvailable) {
+            setLoginLoading(true);
+            try {
+              const tokenResponse = await fetch("/api/google-oauth", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code }),
+              });
+              const tokenData = await tokenResponse.json();
+              env !== "production" &&
+                console.log("Token response from server:", tokenData);
+              if (tokenResponse.ok) {
+                setAlert({
+                  isopen: true,
+                  type: "success",
+                  message:
+                    tokenData?.message ||
+                    "Login successful! Judol Slayer is ready to slay!",
+                });
+                setLoginLoading(false);
+              } else {
+                setAlert({
+                  isopen: true,
+                  type: "error",
+                  message: "Login failed. Please try again.",
+                });
+                setTimeout(() => {
+                  window.open(window.location.pathname, "_self");
+                }, 2000); // Redirect to the same page after 2 seconds
+              }
+            } catch (error) {
+              env !== "production" &&
+                console.error("Error logging in with Google:", error);
+              setAlert({
+                isopen: true,
+                type: "error",
+                message: "Login failed. Please try again.",
+              });
+              setLoginLoading(false);
+            }
+            tokenIsValid();
+          }
+        }, 100); // Give time for message to be sent
       }
     }
   }, []);
@@ -134,7 +181,7 @@ export default function Home() {
 
   const tokenIsValid = async () => {
     try {
-      const response = await fetch("/api/instagram/token/verify", {
+      const response = await fetch("/api/token/verify", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -179,10 +226,10 @@ export default function Home() {
     getBlockedWords();
   }, []);
 
-  const handleLoginOauthInstagram = async () => {
+  const handleLoginOauthGoogle = async () => {
     try {
       setLoginLoading(true);
-      const response = await fetch("/api/instagram-oauth", {
+      const response = await fetch("/api/google-oauth", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -190,60 +237,51 @@ export default function Home() {
 
       if (data?.url) {
         const popup = window.open(data.url, "_blank", "width=600,height=600");
+        let popupCheckInterval: NodeJS.Timeout | null = null;
 
         // Listen for the code from the popup
         const handleMessage = async (event: MessageEvent) => {
-          // if (event.origin !== window.location.origin) return;
+          if (event.origin !== window.location.origin) return;
           const { code } = event.data || {};
-          env !== "production" && console.log("Received code:", code);
-          if (popup?.closed && !!code === false) {
+          if (code) {
             window.removeEventListener("message", handleMessage);
+            if (popupCheckInterval) clearInterval(popupCheckInterval);
+            popup?.close();
+
+            // Exchange code for tokens
+            const tokenResponse = await fetch("/api/google-oauth", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ code }),
+            });
+            const tokenData = await tokenResponse.json();
+            env !== "production" &&
+              console.log("Token response from server:", tokenData);
+            setAlert({
+              isopen: true,
+              type: "success",
+              message:
+                tokenData?.message ||
+                "Login successful! Judol Slayer is ready to slay!",
+            });
+            tokenIsValid();
+            setLoginLoading(false);
+          }
+        };
+        window.addEventListener("message", handleMessage);
+
+        // Fallback: check if popup is closed before code is received
+        popupCheckInterval = setInterval(() => {
+          if (popup && popup.closed) {
+            window.removeEventListener("message", handleMessage);
+            if (popupCheckInterval) clearInterval(popupCheckInterval);
             env !== "production" &&
               console.error(
                 "Popup closed before completing the login process."
               );
             setLoginLoading(false);
-            return;
           }
-          if (code) {
-            window.removeEventListener("message", handleMessage);
-            popup?.close();
-
-            // Exchange code for tokens
-            const tokenResponse = await fetch("/api/instagram-oauth", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ code }),
-            });
-            if (tokenResponse.ok) {
-              const tokenData = await tokenResponse.json();
-              env !== "production" &&
-                console.log("Token response from server:", tokenData);
-              setAlert({
-                isopen: true,
-                type: "success",
-                message:
-                  tokenData?.message ||
-                  "Login successful! Judol Slayer is ready to slay!",
-              });
-              tokenIsValid();
-              setLoginLoading(false);
-            } else {
-              const errorData = await tokenResponse.json();
-              env !== "production" &&
-                console.error("Error exchanging code for tokens:", errorData);
-              setAlert({
-                isopen: true,
-                type: "error",
-                message:
-                  errorData?.error ||
-                  "Login failed. Please try again!. if you see this error multiple times, please contact the developer.",
-              });
-              setLoginLoading(false);
-            }
-          }
-        };
-        window.addEventListener("message", handleMessage);
+        }, 500);
       } else {
         env !== "production" && console.log(data.message);
         tokenIsValid();
@@ -257,60 +295,7 @@ export default function Home() {
     } catch (error) {
       setLoginLoading(false);
       env !== "production" &&
-        console.error("Error logging in with Instagram:", error);
-      setAlert({
-        isopen: true,
-        type: "error",
-        message: "Login failed. Please try again.",
-      });
-    }
-  };
-
-  const handleLoginOauthInstagramMock = async () => {
-    try {
-      setLoginLoading(true);
-
-      const code =
-        "AQCMIQYZ3uDeTDTO_LN2EaRO7xSx2IV0Tmnf5MgC5yH7FqKQX5X93QCXElGRBXiLJTfHNuugL6PkQStO6PTjmJl9MG0fEurD_8hzMpL5xyQJ8-hrZHhedmbaU2UwbwI3NYfDOXLvUyUfiVzAPmvBql5xVOI_qRrrJN0Ef-v3sFOJ86x1inyiAPznk9JHzhP_kTXvr5psK_w8rZjOSwXrkQ9QFWdib6_mA1WHekrkGoSCgA#_";
-
-      if (code) {
-        // Exchange code for tokens
-        const tokenResponse = await fetch("/api/instagram-oauth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code }),
-        });
-        if (tokenResponse.ok) {
-          const tokenData = await tokenResponse.json();
-          env !== "production" &&
-            console.log("Token response from server:", tokenData);
-          setAlert({
-            isopen: true,
-            type: "success",
-            message:
-              tokenData?.message ||
-              "Login successful! Judol Slayer is ready to slay!",
-          });
-          tokenIsValid();
-          setLoginLoading(false);
-        } else {
-          const errorData = await tokenResponse.json();
-          env !== "production" &&
-            console.error("Error exchanging code for tokens:", errorData);
-          setAlert({
-            isopen: true,
-            type: "error",
-            message:
-              errorData?.error +
-              ". Login failed. Please try again!. if you see this error multiple times, please contact the developer.",
-          });
-          setLoginLoading(false);
-        }
-      }
-    } catch (error) {
-      setLoginLoading(false);
-      env !== "production" &&
-        console.error("Error logging in with Instagram:", error);
+        console.error("Error logging in with Google:", error);
       setAlert({
         isopen: true,
         type: "error",
@@ -323,13 +308,13 @@ export default function Home() {
     try {
       setLoginLoading(true);
       Promise.all([
-        fetch("/api/instagram/token/delete", {
+        fetch("/api/token/delete", {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
           },
         }),
-        fetch("/api/instagram-oauth-revoke", {
+        fetch("/api/google-oauth-revoke", {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
@@ -394,9 +379,7 @@ export default function Home() {
     setDetectedCommentList([]);
     setLoading(true);
     // const eventSource = new EventSource("/api/do-delete-judol-comments-new");
-    const eventSource = new EventSource(
-      "/api/instagram/do-detect-judol-comments"
-    );
+    const eventSource = new EventSource("/api/do-detect-judol-comments");
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -561,7 +544,7 @@ export default function Home() {
     }
 
     // Use fetch + ReadableStream for SSE with POST
-    const response = await fetch("/api/instagram/do-delete-judol-comments", {
+    const response = await fetch("/api/do-delete-judol-comments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ commentIds: commentIdsToDelete }),
@@ -685,7 +668,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Judol Slayer | Instagram</title>
+        <title>Judol Slayer | Youtube</title>
         <meta
           name="description"
           content="Judol Slayer UI Project improvement"
@@ -779,7 +762,6 @@ export default function Home() {
           >
             Judol Slayer Project
           </Typography> */}
-
           <Box
             display={"flex"}
             justifyContent={"left"}
@@ -822,7 +804,6 @@ export default function Home() {
               Back to Home
             </Link>
           </Box>
-
           <Box
             display={"flex"}
             justifyContent={"center"}
@@ -834,7 +815,7 @@ export default function Home() {
           >
             <KatanaIcon width={34} height={34} color="#383838" />
             <BlurText
-              text="Instagram Comment Slayer"
+              text="Youtube Comment Slayer"
               delay={150}
               animateBy="words"
               direction="top"
@@ -855,7 +836,7 @@ export default function Home() {
               <Typography
                 component="a"
                 color="primary"
-                href="https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.instagram.com%2Faccounts%2Fmanage_access%2F&h=AT2JdOKQYUN92sY9ekuzAldOzbsn8MetjaXjjvND9x5jTzBCfKOU1TR8IEmu1Tv_KCLrSL3I4EuSlhgk6bup3ZZ5g7KWc-hPnT57lZ63XO1dmEHujnNZfmKIldR-YSeT9acjDw"
+                href="https://myaccount.google.com/permissions"
                 target="_blank"
                 sx={{ textDecoration: "underline" }}
               >
@@ -875,34 +856,14 @@ export default function Home() {
             <Button
               variant="contained"
               color="error"
-              sx={{
-                background: !isTokenAvailable
-                  ? "radial-gradient(circle farthest-corner at 0% 150%, rgb(255, 225, 125) 0%, rgb(255, 205, 105) 12%, rgb(250, 145, 55) 25%, rgb(235, 65, 65) 41%, transparent 95%), linear-gradient(-15deg, rgb(35, 75, 215) -10%, rgb(195, 60, 190) 65%)"
-                  : "",
-              }}
-              startIcon={!isTokenAvailable ? <Instagram /> : <Logout />}
+              startIcon={!isTokenAvailable ? <Google /> : <Logout />}
               onClick={() => {
-                !isTokenAvailable
-                  ? handleLoginOauthInstagram()
-                  : handleLogout();
+                !isTokenAvailable ? handleLoginOauthGoogle() : handleLogout();
               }}
               disabled={loginLoading || loading}
             >
-              {!isTokenAvailable ? "Login with Instagram" : "Log Out"}
+              {!isTokenAvailable ? "Login With Google" : "Log Out"}
             </Button>
-            {/* <Button
-              variant="contained"
-              color="error"
-              startIcon={!isTokenAvailable ? <Instagram /> : <Logout />}
-              onClick={() => {
-                !isTokenAvailable
-                  ? handleLoginOauthInstagramMock()
-                  : handleLogout();
-              }}
-              disabled={loginLoading || loading}
-            >
-              {!isTokenAvailable ? "Login mock" : "Log Out"}
-            </Button> */}
           </Box>
           <Box display={"flex"} flexDirection="column" gap={1.5}>
             <Grid
@@ -1140,7 +1101,9 @@ export default function Home() {
                   }}
                 >
                   <Virtuoso
-                    style={{ height: window.innerHeight * 0.35 }}
+                    style={{
+                      height: window.innerHeight * 0.35,
+                    }}
                     totalCount={logList.length}
                     itemContent={(index) => (
                       <Typography
@@ -1241,80 +1204,22 @@ export default function Home() {
             ) : null}
           </Box>
         </main>
-        <footer className={styles.footer}>
-          <Box
-            display={"flex"}
-            justifyContent={"center"}
-            alignItems={"center"}
-            flexDirection={"row"}
-            width={"100%"}
-            position={{ xs: "relative", md: "absolute" }}
-            sx={{
-              textAlign: "center",
-            }}
-          >
-            <Typography sx={{ color: "white" }}>
-              &copy; {new Date().getFullYear()} Judol Slayer by
-            </Typography>
-            <Typography
-              component="a"
-              color="info"
-              href="https://frisrsyd.github.io/Portfolio/"
-              target="_blank"
-              sx={{ display: "inline" }}
-            >
-              <Web />
-              frisrsyd
-            </Typography>
-          </Box>
-          <Box
-            display={"flex"}
-            justifyContent={{ xs: "center", sm: "end" }}
-            alignItems={"center"}
-            flexDirection={"row"}
-            width={"100%"}
-            pr={{ xs: 0, sm: 2 }}
-          >
-            <a href="https://ko-fi.com/frisrsyd">
-              {" "}
-              <Image
-                src="/ko-fi-banner.png"
-                alt="frisrsyd"
-                width={250}
-                height={50}
-              />
-            </a>
-          </Box>
-          {/* <a
-            href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              aria-hidden
-              src="/window.svg"
-              alt="Window icon"
-              width={16}
-              height={16}
-            />
-            Examples
-          </a>
-          <a
-            href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              aria-hidden
-              src="/globe.svg"
-              alt="Globe icon"
-              width={16}
-              height={16}
-            />
-            Go to nextjs.org →
-          </a> */}
-        </footer>
+        <Footer />
       </div>
     </>
   );
 }
+
+// This function extracts the "code" parameter from the URL query string
+// export async function getServerSideProps(context: GetServerSidePropsContext) {
+//   const { query } = context;
+//   const code = query.code || null;
+
+//   // You can now use the "code" variable as needed (e.g., exchange for tokens, etc.)
+//   // For demonstration, just return it as a prop
+//   return {
+//     props: {
+//       code,
+//     },
+//   };
+// }
