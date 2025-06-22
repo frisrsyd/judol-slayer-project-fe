@@ -1118,8 +1118,8 @@ export default function Home() {
                   width={"100%"}
                   gap={1}
                   mb={{
-                    xs: logList.length > 0 ? 0 : 15,
-                    sm: logList.length > 0 ? 0 : 15,
+                    xs: logList.length > 0 ? 0 : 20,
+                    sm: logList.length > 0 ? 0 : 20,
                     md: 0,
                   }}
                 >
