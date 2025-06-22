@@ -963,8 +963,8 @@ export default function Home() {
               justifyContent={"space-between"}
               columns={{ xs: 4, sm: 8, md: 12 }}
               mb={{
-                xs: isTokenAvailable ? 0 : 15,
-                sm: isTokenAvailable ? 0 : 15,
+                xs: isTokenAvailable ? 0 : 20,
+                sm: isTokenAvailable ? 0 : 20,
                 md: 0,
               }}
             >
@@ -1159,7 +1159,7 @@ export default function Home() {
                 // alignItems={"center"}
                 gap={1.5}
                 flexDirection={{ xs: "column", sm: "row" }}
-                sx={{ mb: 15 }}
+                sx={{ mb: 20 }}
               >
                 <Box
                   display={"flex"}
