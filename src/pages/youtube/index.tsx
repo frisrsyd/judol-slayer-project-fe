@@ -88,6 +88,55 @@ export default function Home() {
         window.opener.postMessage({ code }, window.location.origin);
         setTimeout(() => window.close(), 100); // Give time for message to be sent
       }
+    } else if (window.location.search.includes("code=")) {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      if (code) {
+        setTimeout(async () => {
+          if (!isTokenAvailable) {
+            setLoginLoading(true);
+            try {
+              const tokenResponse = await fetch("/api/google-oauth", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code }),
+              });
+              const tokenData = await tokenResponse.json();
+              env !== "production" &&
+                console.log("Token response from server:", tokenData);
+              if (tokenResponse.ok) {
+                setAlert({
+                  isopen: true,
+                  type: "success",
+                  message:
+                    tokenData?.message ||
+                    "Login successful! Judol Slayer is ready to slay!",
+                });
+                setLoginLoading(false);
+              } else {
+                setAlert({
+                  isopen: true,
+                  type: "error",
+                  message: "Login failed. Please try again.",
+                });
+                setTimeout(() => {
+                  window.open(window.location.pathname, "_self");
+                }, 2000); // Redirect to the same page after 2 seconds
+              }
+            } catch (error) {
+              env !== "production" &&
+                console.error("Error logging in with Google:", error);
+              setAlert({
+                isopen: true,
+                type: "error",
+                message: "Login failed. Please try again.",
+              });
+              setLoginLoading(false);
+            }
+            tokenIsValid();
+          }
+        }, 100); // Give time for message to be sent
+      }
     }
   }, []);
 
