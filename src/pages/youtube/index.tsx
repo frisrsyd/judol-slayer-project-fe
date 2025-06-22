@@ -28,13 +28,14 @@ import {
   Web,
 } from "@mui/icons-material";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { KatanaIcon } from "../../public/katana";
+import { KatanaIcon } from "../../../public/katana";
 import CircularText from "@/components/CircularText";
 import BlurText from "@/components/BlurText";
 import Image from "next/image";
 import { log } from "console";
 import Link from "next/link";
 import { Virtuoso } from "react-virtuoso";
+import { GetServerSidePropsContext } from "next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -86,8 +87,9 @@ export default function Home() {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
       if (code) {
+        // Send code to opener and ensure message is sent before closing
         window.opener.postMessage({ code }, window.location.origin);
-        window.close();
+        setTimeout(() => window.close(), 100); // Give time for message to be sent
       }
     }
   }, []);
@@ -189,22 +191,15 @@ export default function Home() {
 
       if (data?.url) {
         const popup = window.open(data.url, "_blank", "width=600,height=600");
+        let popupCheckInterval: NodeJS.Timeout | null = null;
 
         // Listen for the code from the popup
         const handleMessage = async (event: MessageEvent) => {
           if (event.origin !== window.location.origin) return;
           const { code } = event.data || {};
-          if (popup?.closed && !!code === false) {
-            window.removeEventListener("message", handleMessage);
-            env !== "production" &&
-              console.error(
-                "Popup closed before completing the login process."
-              );
-            setLoginLoading(false);
-            return;
-          }
           if (code) {
             window.removeEventListener("message", handleMessage);
+            if (popupCheckInterval) clearInterval(popupCheckInterval);
             popup?.close();
 
             // Exchange code for tokens
@@ -228,6 +223,19 @@ export default function Home() {
           }
         };
         window.addEventListener("message", handleMessage);
+
+        // Fallback: check if popup is closed before code is received
+        popupCheckInterval = setInterval(() => {
+          if (popup && popup.closed) {
+            window.removeEventListener("message", handleMessage);
+            if (popupCheckInterval) clearInterval(popupCheckInterval);
+            env !== "production" &&
+              console.error(
+                "Popup closed before completing the login process."
+              );
+            setLoginLoading(false);
+          }
+        }, 500);
       } else {
         env !== "production" && console.log(data.message);
         tokenIsValid();
@@ -1226,4 +1234,18 @@ export default function Home() {
       </div>
     </>
   );
+}
+
+// This function extracts the "code" parameter from the URL query string
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { query } = context;
+  const code = query.code || null;
+
+  // You can now use the "code" variable as needed (e.g., exchange for tokens, etc.)
+  // For demonstration, just return it as a prop
+  return {
+    props: {
+      code,
+    },
+  };
 }
