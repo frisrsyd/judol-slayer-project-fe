@@ -1250,15 +1250,15 @@ export default function Home() {
 }
 
 // This function extracts the "code" parameter from the URL query string
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { query } = context;
-  const code = query.code || null;
+// export async function getServerSideProps(context: GetServerSidePropsContext) {
+//   const { query } = context;
+//   const code = query.code || null;
 
-  // You can now use the "code" variable as needed (e.g., exchange for tokens, etc.)
-  // For demonstration, just return it as a prop
-  return {
-    props: {
-      code,
-    },
-  };
-}
+//   // You can now use the "code" variable as needed (e.g., exchange for tokens, etc.)
+//   // For demonstration, just return it as a prop
+//   return {
+//     props: {
+//       code,
+//     },
+//   };
+// }
