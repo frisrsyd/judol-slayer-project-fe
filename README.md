@@ -90,6 +90,14 @@ Start the project using:
 docker run -it frisrsyd/judol-slayer-project-fe
 
 # Or using npm
+npm run dev
+```
+
+or build it for production:
+
+```sh
+# Using npm
+npm run build
 npm start
 ```
 
