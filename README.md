@@ -1,72 +1,110 @@
-## !!!Automatic detect suspicious text, and user have ability to review and decide comments to delete
+# JUDOL-SLAYER-PROJECT-FE
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+*Transforming Moderation into a Powerhouse of Precision*
+
+<div align="center">
+
+<img alt="last-commit" src="https://img.shields.io/github/last-commit/frisrsyd/judol-slayer-project-fe?style=flat&logo=git&logoColor=white&color=0080ff" />
+<img alt="repo-top-language" src="https://img.shields.io/github/languages/top/frisrsyd/judol-slayer-project-fe?style=flat&color=0080ff" />
+<img alt="repo-language-count" src="https://img.shields.io/github/languages/count/frisrsyd/judol-slayer-project-fe?style=flat&color=0080ff" />
+
+</div>
+
+### Built with the tools and technologies:
+
+<div align="center">
+
+<img alt="JSON" src="https://img.shields.io/badge/JSON-000000.svg?style=flat&logo=JSON&logoColor=white" />
+<img alt="Markdown" src="https://img.shields.io/badge/Markdown-000000.svg?style=flat&logo=Markdown&logoColor=white" />
+<img alt="npm" src="https://img.shields.io/badge/npm-CB3837.svg?style=flat&logo=npm&logoColor=white" />
+<img alt="React" src="https://img.shields.io/badge/React-61DAFB.svg?style=flat&logo=React&logoColor=black" />
+<img alt="React" src="https://img.shields.io/badge/Next.js-000000.svg?style=flat&logo=nextdotjs&logoColor=white" />
+<img alt="Docker" src="https://img.shields.io/badge/Docker-2496ED.svg?style=flat&logo=Docker&logoColor=white" />
+<img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6.svg?style=flat&logo=TypeScript&logoColor=white" />
+
+</div>
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Usage](#usage)
+  - [Testing](#testing)
+
+---
+
+## Overview
+
+**judol-slayer-project-fe** is a Next.js-based developer platform focused on content moderation, social media integration, and scalable deployment. It streamlines community management with powerful moderation utilities, OAuth support for Instagram, Google, and YouTube, and secure JWT-based session handling. The project also includes optimized Docker configurations for consistent builds and real-time APIs for comment detection and deletion.
+
+### Why judol-slayer-project-fe?
+
+This project helps developers build secure, scalable web applications with integrated moderation and social media tools. Core features include:
+
+- 🟢 **🛠️**: *Robust moderation utilities* — Detect, manage, and delete inappropriate comments across platforms.
+- 🔵 **🔑**: *OAuth integrations* — Seamlessly connect with Instagram, Google, and YouTube for secure user authentication.
+- 🟠 **🔒**: *JWT-based security* — Manage user sessions and permissions with reliable token handling.
+- 🟣 **🚀**: *Optimized Docker environment* — Ensure consistent builds and deployments for scalable production.
+- 🟡 **⚡**: *Real-time comment detection* — Streamline moderation workflows with live analysis and updates.
+
+---
 
 ## Getting Started
 
-Requirement:
+### Prerequisites
 
-- NodeJS
-- GIT
+This project requires the following dependencies:
 
-First, copy this repo to your own device:
+- **Programming Language:** TypeScript
+- **Package Manager:** npm
+- **Container Runtime:** Docker
 
-```bash
+### Installation
+
+Build `judol-slayer-project-fe` from the source and install dependencies:
+
+```sh
+# Clone the repository
 git clone https://github.com/frisrsyd/judol-slayer-project-fe
-#then enter to the project folder
+
+# Navigate to the project directory
 cd judol-slayer-project-fe
-```
 
-then, run the installation package with nodeJS:
+# Using Docker
+docker build -t frisrsyd/judol-slayer-project-fe .
 
-```bash
+# Or using npm
 npm install
-#then copy the env
-copy example.env .env
-#or
-cp example.env .env
 ```
 
-and fill the .env with your own environment variable
+### Usage
 
-then, run the development server:
+Start the project using:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```sh
+# Using Docker
+docker run -it frisrsyd/judol-slayer-project-fe
+
+# Or using npm
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Testing
 
-or build the app first for faster mode
-run
+The project uses a test framework (e.g., Jest, Vitest). Run the tests with:
 
-```bash
-npm run build
-#and then run:
-npm run start
+```sh
+# Using Docker
+echo 'INSERT-TEST-COMMAND-HERE'
+
+# Or using npm
+npm test
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+[⬆ Return to top](#judol-slayer-project-fe)
