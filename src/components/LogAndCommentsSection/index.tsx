@@ -2,10 +2,10 @@ import * as React from "react";
 import { Box } from "@mui/material";
 import LogDisplay from "../LogDisplay";
 import DetectedCommentsDisplay from "../DetectedCommentsDisplay";
-import { Comment } from "../../hooks/useCommentManagement";
+import { Comment, LogEntry } from "../../hooks/useCommentManagement";
 
 interface LogAndCommentsSectionProps {
-  logList: string[];
+  logList: LogEntry[];
   detectedCommentList: Comment[];
   handleCommentCheckboxChange: (
     event: React.ChangeEvent<HTMLInputElement>
@@ -17,7 +17,8 @@ export default function LogAndCommentsSection({
   detectedCommentList,
   handleCommentCheckboxChange,
 }: LogAndCommentsSectionProps) {
-  if (!logList.length) return null;
+  if (!logList.length && !detectedCommentList.length) return null;
+  console.log("detectedCommentList", detectedCommentList);
 
   return (
     <Box
@@ -27,11 +28,13 @@ export default function LogAndCommentsSection({
       flexDirection={{ xs: "column", sm: "row" }}
       sx={{ mb: 20 }}
     >
-      <LogDisplay logList={logList} />
-      <DetectedCommentsDisplay
-        detectedCommentList={detectedCommentList}
-        handleCommentCheckboxChange={handleCommentCheckboxChange}
-      />
+      {!logList.length ? null : <LogDisplay logList={logList} />}
+      {!detectedCommentList.length ? null : (
+        <DetectedCommentsDisplay
+          detectedCommentList={detectedCommentList}
+          handleCommentCheckboxChange={handleCommentCheckboxChange}
+        />
+      )}
     </Box>
   );
 }

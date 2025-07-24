@@ -1,13 +1,23 @@
 import * as React from "react";
 import { Box, Typography } from "@mui/material";
 import { Virtuoso } from "react-virtuoso";
+import { LogEntry } from "../../hooks/useCommentManagement";
 
 interface LogDisplayProps {
-  logList: string[];
+  logList: LogEntry[];
 }
 
 export default function LogDisplay({ logList }: LogDisplayProps) {
   if (!logList.length) return null;
+
+  // Sort logs by time in descending order (newest first)
+  const sortedLogs = React.useMemo(() => {
+    return [...logList].sort((a, b) => {
+      const timeA = a.time || 0;
+      const timeB = b.time || 0;
+      return timeB - timeA; // Descending order
+    });
+  }, [logList]);
 
   return (
     <Box
@@ -39,20 +49,29 @@ export default function LogDisplay({ logList }: LogDisplayProps) {
     >
       <Virtuoso
         style={{ height: window.innerHeight * 0.35 }}
-        totalCount={logList.length}
-        itemContent={(index) => (
-          <Typography
-            variant="subtitle2"
-            sx={{
-              backgroundColor: "white",
-              borderRadius: "4px",
-              padding: "8px",
-              width: "100%",
-            }}
-          >
-            {logList[index]}
-          </Typography>
-        )}
+        totalCount={sortedLogs.length}
+        itemContent={(index) => {
+          const logEntry = sortedLogs[index];
+          // Extract the log text from the log entry object
+          const logText =
+            typeof logEntry === "string"
+              ? logEntry
+              : logEntry?.log || JSON.stringify(logEntry);
+
+          return (
+            <Typography
+              variant="subtitle2"
+              sx={{
+                backgroundColor: "white",
+                borderRadius: "4px",
+                padding: "8px",
+                width: "100%",
+              }}
+            >
+              {logText}
+            </Typography>
+          );
+        }}
       />
     </Box>
   );
