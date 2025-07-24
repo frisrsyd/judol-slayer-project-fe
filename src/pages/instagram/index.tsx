@@ -33,6 +33,7 @@ export default function Instagram() {
         handleDownloadLogFile={judolSlayer.handleDownloadLogFile}
         handleCommentCheckboxChange={judolSlayer.handleCommentCheckboxChange}
         handleStrictModeChange={judolSlayer.handleStrictModeChange}
+        handleCloseAlert={judolSlayer.handleCloseAlert}
         setLogList={judolSlayer.setLogList}
         showStrictMode={true} // Instagram uses strict mode
         platform="instagram"

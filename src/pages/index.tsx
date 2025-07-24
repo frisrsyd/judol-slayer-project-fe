@@ -32,6 +32,7 @@ export default function Home() {
         handleDeleteJudolComments={judolSlayer.handleDeleteJudolComments}
         handleDownloadLogFile={judolSlayer.handleDownloadLogFile}
         handleCommentCheckboxChange={judolSlayer.handleCommentCheckboxChange}
+        handleCloseAlert={judolSlayer.handleCloseAlert}
         setLogList={judolSlayer.setLogList}
         platform="main"
       />

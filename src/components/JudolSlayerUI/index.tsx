@@ -27,6 +27,7 @@ interface JudolSlayerUIProps {
     event: React.ChangeEvent<HTMLInputElement>
   ) => void;
   handleStrictModeChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleCloseAlert: () => void;
   setLogList: React.Dispatch<React.SetStateAction<string[]>>;
 
   // Platform specific
@@ -49,13 +50,14 @@ export default function JudolSlayerUI({
   handleDownloadLogFile,
   handleCommentCheckboxChange,
   handleStrictModeChange,
+  handleCloseAlert,
   setLogList,
   showStrictMode = false,
   platform,
 }: JudolSlayerUIProps) {
   return (
     <>
-      <AlertComponent alert={alert} />
+      <AlertComponent alert={alert} onClose={handleCloseAlert} />
       <LoadingOverlay loading={loginLoading || loading} />
 
       <MainControls
@@ -68,16 +70,18 @@ export default function JudolSlayerUI({
         handleStrictModeChange={handleStrictModeChange}
       />
 
-      <ActionButtons
-        isTokenAvailable={isTokenAvailable}
-        loading={loading}
-        logList={logList}
-        detectedCommentList={detectedCommentList}
-        handleDetectJudolComments={handleDetectJudolComments}
-        handleDeleteJudolComments={handleDeleteJudolComments}
-        handleDownloadLogFile={handleDownloadLogFile}
-        setLogList={setLogList}
-      />
+      {platform !== "main" ? (
+        <ActionButtons
+          isTokenAvailable={isTokenAvailable}
+          loading={loading}
+          logList={logList}
+          detectedCommentList={detectedCommentList}
+          handleDetectJudolComments={handleDetectJudolComments}
+          handleDeleteJudolComments={handleDeleteJudolComments}
+          handleDownloadLogFile={handleDownloadLogFile}
+          setLogList={setLogList}
+        />
+      ) : null}
 
       <LogAndCommentsSection
         logList={logList}

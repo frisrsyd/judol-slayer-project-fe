@@ -33,8 +33,9 @@ export default function YouTube() {
         handleDownloadLogFile={judolSlayer.handleDownloadLogFile}
         handleCommentCheckboxChange={judolSlayer.handleCommentCheckboxChange}
         handleStrictModeChange={judolSlayer.handleStrictModeChange}
+        handleCloseAlert={judolSlayer.handleCloseAlert}
         setLogList={judolSlayer.setLogList}
-        showStrictMode={false} // YouTube doesn't use strict mode
+        showStrictMode={true} // YouTube doesn't use strict mode
         platform="youtube"
       />
     </MainLayout>
