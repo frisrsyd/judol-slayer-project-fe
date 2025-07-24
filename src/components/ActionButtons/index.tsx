@@ -2,17 +2,17 @@ import * as React from "react";
 import { Box, Button } from "@mui/material";
 import { Delete, Download, RemoveRedEye } from "@mui/icons-material";
 import { KatanaIcon } from "../../../public/katana";
-import { Comment } from "../../hooks/useCommentManagement";
+import { Comment, LogEntry } from "../../hooks/useCommentManagement";
 
 interface ActionButtonsProps {
   isTokenAvailable: boolean;
   loading: boolean;
-  logList: string[];
+  logList: LogEntry[];
   detectedCommentList: Comment[];
   handleDetectJudolComments: () => void;
   handleDeleteJudolComments: () => void;
   handleDownloadLogFile: () => void;
-  setLogList: React.Dispatch<React.SetStateAction<string[]>>;
+  setLogList: React.Dispatch<React.SetStateAction<LogEntry[]>>;
 }
 
 export default function ActionButtons({

@@ -14,6 +14,15 @@ export default function DetectedCommentsDisplay({
   detectedCommentList,
   handleCommentCheckboxChange,
 }: DetectedCommentsDisplayProps) {
+  // Sort comments by time in descending order (newest first)
+  const sortedComments = React.useMemo(() => {
+    return [...detectedCommentList].sort((a, b) => {
+      const timeA = a.time || 0;
+      const timeB = b.time || 0;
+      return timeB - timeA; // Descending order
+    });
+  }, [detectedCommentList]);
+
   return (
     <Box
       display={"flex"}
@@ -59,9 +68,9 @@ export default function DetectedCommentsDisplay({
       </Typography>
       <Virtuoso
         style={{ height: window.innerHeight * 0.35 }}
-        totalCount={detectedCommentList.length}
+        totalCount={sortedComments.length}
         itemContent={(index) => {
-          const comment = detectedCommentList[index];
+          const comment = sortedComments[index];
           return (
             <Box
               display="flex"

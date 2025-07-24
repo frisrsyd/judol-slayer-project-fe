@@ -13,7 +13,16 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return;
   }
 
-  const textContent = logList.join("\n");
+  // Convert LogEntry objects to strings for download
+  const logStrings = logList.map((entry: any) => {
+    if (typeof entry === "string") {
+      return entry;
+    }
+    // If it's a LogEntry object, extract the log text
+    return entry?.log || JSON.stringify(entry);
+  });
+
+  const textContent = logStrings.join("\n");
   const buffer = Buffer.from(textContent, "utf-8");
 
   res.setHeader("Content-Type", "text/plain");

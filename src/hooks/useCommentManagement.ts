@@ -1,10 +1,16 @@
 import * as React from "react";
 import { AlertProps } from "./useAlert";
 
+export interface LogEntry {
+  [key: string]: any;
+  time?: number;
+}
+
 export interface Comment {
   commentId: string;
   commentText: string;
   mustBeDelete: boolean;
+  time?: number;
 }
 
 export interface UseCommentManagementProps {
@@ -16,7 +22,7 @@ export function useCommentManagement({
   platform,
   setAlert,
 }: UseCommentManagementProps) {
-  const [logList, setLogList] = React.useState<string[]>([]);
+  const [logList, setLogList] = React.useState<LogEntry[]>([]);
   const [detectedCommentList, setDetectedCommentList] = React.useState<
     Comment[]
   >([]);
@@ -38,13 +44,18 @@ export function useCommentManagement({
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      const time = event.timeStamp;
       if (data.log) {
-        setLogList((prevLogs) => [...prevLogs, data.log]);
+        const logEntry: LogEntry =
+          typeof data.log === "string"
+            ? { log: data.log, time }
+            : { ...data.log, time };
+        setLogList((prevLogs) => [...prevLogs, logEntry]);
       }
       if (data.detectedComment) {
         setDetectedCommentList((prevComments) => [
           ...prevComments,
-          data.detectedComment,
+          { ...data.detectedComment, time },
         ]);
       }
       env !== "production" && console.log("Received data:", data);
@@ -140,7 +151,14 @@ export function useCommentManagement({
           .find((line) => line.startsWith("data:"));
         if (!dataLine) continue;
         const data = JSON.parse(dataLine.replace("data: ", ""));
-        if (data.log) setLogList((prev) => [...prev, data.log]);
+        if (data.log) {
+          const time = Date.now(); // Use current timestamp for deletion logs
+          const logEntry: LogEntry =
+            typeof data.log === "string"
+              ? { log: data.log, time }
+              : { ...data.log, time };
+          setLogList((prev) => [...prev, logEntry]);
+        }
         if (data.message) {
           setAlert({
             isopen: true,

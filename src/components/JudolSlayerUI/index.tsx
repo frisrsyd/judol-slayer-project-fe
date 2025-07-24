@@ -5,7 +5,7 @@ import MainControls from "../MainControls";
 import ActionButtons from "../ActionButtons";
 import LogAndCommentsSection from "../LogAndCommentsSection";
 import { AlertProps } from "../../hooks/useAlert";
-import { Comment } from "../../hooks/useCommentManagement";
+import { Comment, LogEntry } from "../../hooks/useCommentManagement";
 
 interface JudolSlayerUIProps {
   // State
@@ -13,7 +13,7 @@ interface JudolSlayerUIProps {
   isTokenAvailable: boolean;
   loading: boolean;
   loginLoading: boolean;
-  logList: string[];
+  logList: LogEntry[];
   detectedCommentList: Comment[];
   strictMode: boolean;
   alert: AlertProps;
@@ -28,7 +28,7 @@ interface JudolSlayerUIProps {
   ) => void;
   handleStrictModeChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleCloseAlert: () => void;
-  setLogList: React.Dispatch<React.SetStateAction<string[]>>;
+  setLogList: React.Dispatch<React.SetStateAction<LogEntry[]>>;
 
   // Platform specific
   showStrictMode?: boolean;
