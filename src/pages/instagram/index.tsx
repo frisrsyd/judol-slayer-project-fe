@@ -4,14 +4,11 @@ import JudolSlayerUI from "@/components/JudolSlayerUI";
 import { useJudolSlayer } from "@/hooks/useJudolSlayer";
 import * as React from "react";
 
-export default function InstagramPage() {
+export default function Instagram() {
   const judolSlayer = useJudolSlayer({ platform: "instagram" });
 
   return (
-    <MainLayout 
-      title="Judol Slayer - Instagram Platform" 
-      description="Judol Slayer for Instagram comments - Clean your Instagram comments from spam"
-    >
+    <MainLayout title="Judol Slayer - Instagram">
       <Navigation
         isTokenAvailable={judolSlayer.isTokenAvailable}
         loginLoading={judolSlayer.loginLoading}
@@ -37,7 +34,7 @@ export default function InstagramPage() {
         handleCommentCheckboxChange={judolSlayer.handleCommentCheckboxChange}
         handleStrictModeChange={judolSlayer.handleStrictModeChange}
         setLogList={judolSlayer.setLogList}
-        showStrictMode={true}
+        showStrictMode={true} // Instagram uses strict mode
         platform="instagram"
       />
     </MainLayout>

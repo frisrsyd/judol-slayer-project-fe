@@ -4,14 +4,11 @@ import JudolSlayerUI from "@/components/JudolSlayerUI";
 import { useJudolSlayer } from "@/hooks/useJudolSlayer";
 import * as React from "react";
 
-export default function YouTubePage() {
+export default function YouTube() {
   const judolSlayer = useJudolSlayer({ platform: "youtube" });
 
   return (
-    <MainLayout
-      title="Judol Slayer - YouTube Platform"
-      description="Judol Slayer for YouTube comments - Clean your YouTube comments from spam"
-    >
+    <MainLayout title="Judol Slayer - YouTube">
       <Navigation
         isTokenAvailable={judolSlayer.isTokenAvailable}
         loginLoading={judolSlayer.loginLoading}
@@ -37,7 +34,7 @@ export default function YouTubePage() {
         handleCommentCheckboxChange={judolSlayer.handleCommentCheckboxChange}
         handleStrictModeChange={judolSlayer.handleStrictModeChange}
         setLogList={judolSlayer.setLogList}
-        showStrictMode={true}
+        showStrictMode={false} // YouTube doesn't use strict mode
         platform="youtube"
       />
     </MainLayout>

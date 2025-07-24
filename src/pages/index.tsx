@@ -33,7 +33,6 @@ export default function Home() {
         handleDownloadLogFile={judolSlayer.handleDownloadLogFile}
         handleCommentCheckboxChange={judolSlayer.handleCommentCheckboxChange}
         setLogList={judolSlayer.setLogList}
-        showStrictMode={false}
         platform="main"
       />
     </MainLayout>
