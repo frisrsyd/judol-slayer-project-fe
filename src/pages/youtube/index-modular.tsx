@@ -1,22 +1,19 @@
 import MainLayout from "@/layouts/main";
 import Navigation from "@/components/Navigation";
-import JudolSlayerUI from "@/components/JudolSlayerUI";
-import { useJudolSlayer } from "@/hooks/useJudolSlayer";
+import JudolSlayerUI from "@/components/JudolSlayerUIModular";
+import { useJudolSlayer } from "@/hooks/useJudolSlayerModular";
 import * as React from "react";
 
-export default function InstagramPage() {
-  const judolSlayer = useJudolSlayer({ platform: "instagram" });
+export default function YouTube() {
+  const judolSlayer = useJudolSlayer({ platform: "youtube" });
 
   return (
-    <MainLayout 
-      title="Judol Slayer - Instagram Platform" 
-      description="Judol Slayer for Instagram comments - Clean your Instagram comments from spam"
-    >
+    <MainLayout title="Judol Slayer - YouTube">
       <Navigation
         isTokenAvailable={judolSlayer.isTokenAvailable}
         loginLoading={judolSlayer.loginLoading}
         loading={judolSlayer.loading}
-        currentPlatform="instagram"
+        currentPlatform="youtube"
         handleLogin={judolSlayer.handleLogin}
         handleLogout={judolSlayer.handleLogout}
       />
@@ -37,8 +34,8 @@ export default function InstagramPage() {
         handleCommentCheckboxChange={judolSlayer.handleCommentCheckboxChange}
         handleStrictModeChange={judolSlayer.handleStrictModeChange}
         setLogList={judolSlayer.setLogList}
-        showStrictMode={true}
-        platform="instagram"
+        showStrictMode={false} // YouTube doesn't use strict mode
+        platform="youtube"
       />
     </MainLayout>
   );

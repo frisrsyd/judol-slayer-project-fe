@@ -8,8 +8,8 @@ export default function InstagramPage() {
   const judolSlayer = useJudolSlayer({ platform: "instagram" });
 
   return (
-    <MainLayout 
-      title="Judol Slayer - Instagram Platform" 
+    <MainLayout
+      title="Judol Slayer - Instagram Platform"
       description="Judol Slayer for Instagram comments - Clean your Instagram comments from spam"
     >
       <Navigation
