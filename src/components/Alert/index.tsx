@@ -29,6 +29,7 @@ export default function AlertComponent({
       timeout={{ enter: 500, exit: 300 }}
       mountOnEnter
       unmountOnExit
+      onClick={isMobile ? onClose : undefined}
     >
       <Alert
         sx={{

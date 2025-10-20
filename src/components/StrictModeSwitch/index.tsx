@@ -17,7 +17,7 @@ export default function StrictModeSwitch({
         borderRadius: "4px",
         p: 1,
       }}
-      size={{ xs: 4, sm: 8, md: 6 }}
+      size={{ xs: 12, sm: 12, md: 6 }}
     >
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
         <Typography

@@ -48,7 +48,7 @@ export default function LogDisplay({ logList }: LogDisplayProps) {
       }}
     >
       <Virtuoso
-        style={{ height: window.innerHeight * 0.35 }}
+        style={{ height: window.innerHeight * 0.4 }}
         totalCount={sortedLogs.length}
         itemContent={(index) => {
           const logEntry = sortedLogs[index];
@@ -66,6 +66,9 @@ export default function LogDisplay({ logList }: LogDisplayProps) {
                 borderRadius: "4px",
                 padding: "8px",
                 width: "100%",
+                borderTop: index === 0 ? "none" : "1px solid #e0e0e0",
+                borderBottom: index === sortedLogs.length - 1 ? "none" : "1px solid #e0e0e0",
+                wordBreak: "break-word",
               }}
             >
               {logText}

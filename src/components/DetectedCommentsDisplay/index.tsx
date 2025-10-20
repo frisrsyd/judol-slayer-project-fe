@@ -67,7 +67,7 @@ export default function DetectedCommentsDisplay({
         {`Detected Judol Comments (${detectedCommentList.length})`}
       </Typography>
       <Virtuoso
-        style={{ height: window.innerHeight * 0.35 }}
+        style={{ height: window.innerHeight * 0.4 }}
         totalCount={sortedComments.length}
         itemContent={(index) => {
           const comment = sortedComments[index];
@@ -91,6 +91,12 @@ export default function DetectedCommentsDisplay({
                   borderRadius: "4px",
                   padding: "8px",
                   width: "100%",
+                  borderTop: index === 0 ? "none" : "1px solid #e0e0e0",
+                  borderBottom:
+                    index === sortedComments.length - 1
+                      ? "none"
+                      : "1px solid #e0e0e0",
+                  wordBreak: "break-word",
                 }}
               >
                 {comment.commentText}

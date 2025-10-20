@@ -26,17 +26,31 @@
     --button-secondary-hover: #1a1a1a;
   }
 } */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 24px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #951E1E;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+/* firefox */
 
 .main {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 1.5rem;
   grid-row-start: 2;
   width: 100%;
   padding-left: 2dvw;
   padding-right: 2dvw;
   padding-top: 2dvh;
   height: calc(100svh - 88px);
+  /* flex: 1; */
+  overflow: auto;
 }
 
 .main ol {
@@ -148,8 +162,8 @@ a.secondary {
 
 @media (max-width: 700px) {
   .page {
-    padding: 32px;
-    padding-bottom: 80px;
+    /* padding: 32px; */
+    /* padding-bottom: 80px; */
   }
 
   .main {

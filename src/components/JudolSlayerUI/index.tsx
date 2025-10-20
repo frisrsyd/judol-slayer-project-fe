@@ -6,6 +6,7 @@ import ActionButtons from "../ActionButtons";
 import LogAndCommentsSection from "../LogAndCommentsSection";
 import { AlertProps } from "../../hooks/useAlert";
 import { Comment, LogEntry } from "../../hooks/useCommentManagement";
+import { Box } from "@mui/material";
 
 interface JudolSlayerUIProps {
   // State
