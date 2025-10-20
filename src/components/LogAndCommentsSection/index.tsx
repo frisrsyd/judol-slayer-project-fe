@@ -26,7 +26,7 @@ export default function LogAndCommentsSection({
       justifyContent={"space-between"}
       gap={1.5}
       flexDirection={{ xs: "column", sm: "row" }}
-      sx={{ mb: 20 }}
+      sx={{ mb: { xs: 12, sm: 2 } }}
     >
       {!logList.length ? null : <LogDisplay logList={logList} />}
       {!detectedCommentList.length ? null : (

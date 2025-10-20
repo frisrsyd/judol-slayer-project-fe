@@ -27,11 +27,13 @@ export default function Navigation({
       {/* Header */}
       {currentPlatform !== "main" ? (
         <Box
+          id={"back-to-home-link"}
           display={"flex"}
           justifyContent={"left"}
           alignItems={"center"}
           flexDirection={"column"}
           position={{ xs: "relative", lg: "absolute" }}
+          sx={{ mt: 0.5, zIndex: 11 }}
         >
           <Link
             href="/"
@@ -52,10 +54,16 @@ export default function Navigation({
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.color = "#f5f5f5";
               (e.currentTarget as HTMLElement).style.background = "#383838";
+              (e.currentTarget as HTMLElement).style.backdropFilter =
+                "blur(10px)";
+              // (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255, 255, 255, 0.10)";
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.color = "#383838";
               (e.currentTarget as HTMLElement).style.background = "transparent";
+              (e.currentTarget as HTMLElement).style.backdropFilter = "none";
+              (e.currentTarget as HTMLElement).style.backgroundColor =
+                "rgba(255, 255, 255, 0.10)";
             }}
           >
             <ArrowBack
@@ -140,11 +148,24 @@ export default function Navigation({
       {/* Platform Indicator */}
       {currentPlatform !== "main" && (
         <Box
+          component={"a"}
+          href="#back-to-home-link"
           display={"flex"}
           justifyContent={"center"}
           alignItems={"center"}
           gap={1}
-          sx={{ mb: 2 }}
+          sx={{
+            mb: 2,
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+            backgroundColor: "rgba(255, 255, 255, 0.10)",
+            backdropFilter: "blur(10px)",
+            py: 1,
+            width: "100%",
+            borderRadius: "8px",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+          }}
         >
           {currentPlatform === "youtube" ? (
             <YouTube sx={{ color: "#FF0000" }} />
@@ -168,6 +189,27 @@ export default function Navigation({
           </Typography>
         </Box>
       )}
+      {isTokenAvailable && handleLogout && currentPlatform !== "main" ? (
+        <Box
+          display={"flex"}
+          justifyContent={"left"}
+          alignItems={"center"}
+          flexDirection={"column"}
+          position={{ xs: "relative", lg: "absolute" }}
+          sx={{ mt: { xs: 0, lg: 1 }, zIndex: { xs: 9, lg: 12 }, right: { xs: "auto", lg: "2dvw" }, pr: { xs: 0, lg: 1 } }}
+        >
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={handleLogout}
+            disabled={loginLoading || loading}
+            startIcon={<Logout />}
+            // sx={{ position: { xs: "relative", lg: "absolute" }, zIndex: 11 }}
+          >
+            Logout
+          </Button>
+        </Box>
+      ) : null}
 
       {/* Login/Logout Info */}
       {currentPlatform !== "main" && !isTokenAvailable ? (
@@ -224,18 +266,6 @@ export default function Navigation({
             {`Login with ${
               currentPlatform === "youtube" ? "Google" : "Instagram"
             }`}
-          </Button>
-        ) : null}
-
-        {isTokenAvailable && handleLogout && currentPlatform !== "main" ? (
-          <Button
-            variant="outlined"
-            color="error"
-            onClick={handleLogout}
-            disabled={loginLoading || loading}
-            startIcon={<Logout />}
-          >
-            Logout
           </Button>
         ) : null}
       </Box>
