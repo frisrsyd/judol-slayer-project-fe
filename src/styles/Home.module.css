@@ -26,18 +26,6 @@
     --button-secondary-hover: #1a1a1a;
   }
 } */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 24px;
-}
-::-webkit-scrollbar-thumb {
-  background-color: #951E1E;
-  border-radius: 4px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-/* firefox */
 
 .main {
   display: flex;
@@ -51,6 +39,17 @@
   height: calc(100svh - 88px);
   /* flex: 1; */
   overflow: auto;
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 24px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: #951e1e;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 .main ol {
